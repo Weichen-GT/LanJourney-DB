@@ -165,6 +165,8 @@ CREATE TABLE
     user_id           UUID   NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
     meaning_id        BIGINT NOT NULL REFERENCES meaning  (id) ON DELETE CASCADE,
     status            INT    NOT NULL DEFAULT 0 CHECK (status BETWEEN 0 AND 10),
+    -- How the row was CREATED; written once, never updated (status changes live in meaning_review).
+    source            TEXT   NOT NULL CHECK (source IN ('ONBOARDING', 'ARTICLE', 'QUIZ', 'MANUAL', 'UNKNOWN')),
     first_seen_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     learned_at        TIMESTAMPTZ,
     last_reviewed_at  TIMESTAMPTZ,
@@ -395,3 +397,18 @@ CREATE TABLE
 
 CREATE INDEX IF NOT EXISTS idx_meaning_review_user_meaning
   ON meaning_review (user_id, meaning_id, reviewed_at);
+
+-- =========================
+-- Row Level Security
+-- =========================
+-- Supabase exposes every table in the public schema through its REST API. Enabling RLS with no
+-- policies blocks that path for the anon/authenticated roles; the backend connects as the
+-- 'postgres' role, which bypasses RLS, so the app is unaffected. This loop covers every table,
+-- including any added later, so nothing is left exposed by accident. Safe to re-run.
+DO $$
+DECLARE t RECORD;
+BEGIN
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t.tablename);
+  END LOOP;
+END $$;
