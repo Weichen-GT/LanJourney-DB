@@ -1,8 +1,8 @@
 -- ============================================================
 -- vocabulary + meaning seed data
--- Source : initial_vocab_wordnet_applied.json
--- Generated: 2026-09-30 01:21:46 by scripts/json_to_sql.py (deterministic)
--- Terms : 6841   Meanings: 13050
+-- Source : initial_vocab_wordnet_cleaned.json
+-- Generated: 2026-10-02 21:59:21 by scripts/json_to_sql.py (deterministic)
+-- Terms : 6841   Meanings: 13000
 -- Safe to re-run: ON CONFLICT DO NOTHING throughout.
 -- ============================================================
 
@@ -605,10 +605,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'adj_1', 'Of a pale, tan-brown color, like a camel''s coat.', '驼色的；浅棕黄色的。', 'adj', 'She wore a camel coat with black boots.', '她穿了一件驼色大衣，配黑色靴子。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('camel')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vi_1', 'To work in a rigid and uninspired way.', '工作刻板平庸', 'vi', 'He felt his work had become routine and camel-like.', '他觉得他的工作变得刻板而平庸了。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('camel')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- schoolbag
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -654,11 +650,7 @@ SELECT id, 'adj_2', 'Willing and eager to do something or help someone.', '乐�
 FROM vocabulary WHERE LOWER(term) = LOWER('glad')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', 'to make happy', '使高兴', 'vt', 'The news gladdened her heart.', '这个消息使她感到高兴。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('glad')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'n_1', 'A given name for a person.', '人名；(塞、瑞典)格拉德；(英)格莱德；(法、挪)格拉。', 'n', 'Glad is a common name.', '格拉德是一个常见的名字。', 4, NULL
+SELECT id, 'n_1', 'A given name for a person.', '人名；(塞、瑞典)格拉德；(英)格莱德；(法、挪)格拉。', 'n', 'Glad is a common name.', '格拉德是一个常见的名字。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('glad')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -5832,7 +5824,7 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
   'might', FALSE, FALSE, NULL, NULL, '/maɪt/', 'expresses possibility or a weaker assertion', 'modal verb, n'
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'modal_verb_1', 'expresses possibility or a weaker assertion', '可以〔用于礼貌地提出建议〕', 'modal verb', 'I might go to the store later.', '我可能稍后去商店。', 1, NULL
+SELECT id, 'modal_verb_1', 'expresses possibility or a weaker assertion', '可以〔用于礼貌地提出建议〕', 'aux', 'I might go to the store later.', '我可能稍后去商店。', 1, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('might')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -7610,7 +7602,7 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
   'will', FALSE, FALSE, NULL, NULL, '/wɪl/', 'expresses determination or a future event', 'modal verb,n,v'
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'modal_verb_1', 'used to express future time', '用于构成将来时', 'modal verb', 'I will go to the store tomorrow.', '我明天将去商店。', 1, NULL
+SELECT id, 'modal_verb_1', 'used to express future time', '用于构成将来时', 'aux', 'I will go to the store tomorrow.', '我明天将去商店。', 1, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('will')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -15229,7 +15221,7 @@ SELECT id, 'noun_2', 'The specific area of work you focus on professionally.', '
 FROM vocabulary WHERE LOWER(term) = LOWER('specialty')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'special or independent', '专门的，独立的', 'a', 'This is a specialty clinic.', '这是一个专门的诊所。', 3, NULL
+SELECT id, 'a_1', 'special or independent', '专门的，独立的', 'adj', 'This is a specialty clinic.', '这是一个专门的诊所。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('specialty')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -19019,11 +19011,7 @@ SELECT id, 'noun_1', 'A preference or feeling that prevents you from being fair 
 FROM vocabulary WHERE LOWER(term) = LOWER('bias')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'slant', '斜线', 'a', 'The bias of the line created an optical illusion.', '线的斜度造成了一种视觉错觉。', 2, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('bias')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'verb_1', 'To unfairly influence someone''s opinion or decision.', '指不公平地影响某人的观点或决定。', 'v', 'The news report seemed to bias the jury.', '这篇新闻报道似乎影响了陪审团的判断。', 3, 'v#1088088'
+SELECT id, 'verb_1', 'To unfairly influence someone''s opinion or decision.', '指不公平地影响某人的观点或决定。', 'v', 'The news report seemed to bias the jury.', '这篇新闻报道似乎影响了陪审团的判断。', 2, 'v#1088088'
 FROM vocabulary WHERE LOWER(term) = LOWER('bias')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -19862,19 +19850,15 @@ SELECT id, 'noun_1', 'A feeling of coldness caused by a cold environment.', '指
 FROM vocabulary WHERE LOWER(term) = LOWER('chill')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'Cold or cool.', '寒冷的', 'a', 'The chill air bit at my cheeks.', '寒冷的空气吹打着我的脸颊。', 2, NULL
+SELECT id, 'a_1', 'Cold or cool.', '寒冷的', 'adj', 'The chill air bit at my cheeks.', '寒冷的空气吹打着我的脸颊。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('chill')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_2', 'Unfriendly or aloof.', '冷漠的', 'a', 'She gave him a chill reception.', '她对他表示冷淡。', 3, NULL
+SELECT id, 'verb_1', 'To make someone feel uneasy or apprehensive.', '指使某人感到不安或恐惧。', 'v', 'The news chilled her to the bone.', '这个消息让她感到非常恐惧。', 3, 'v#1822939'
 FROM vocabulary WHERE LOWER(term) = LOWER('chill')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'verb_1', 'To make someone feel uneasy or apprehensive.', '指使某人感到不安或恐惧。', 'v', 'The news chilled her to the bone.', '这个消息让她感到非常恐惧。', 4, 'v#1822939'
-FROM vocabulary WHERE LOWER(term) = LOWER('chill')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'verb_2', 'To make something cool or cooler.', '指使某物变得凉爽。', 'v', 'Let''s chill the wine before dinner.', '我们可以在晚餐前把酒冷藏一下。', 5, 'v#371065'
+SELECT id, 'verb_2', 'To make something cool or cooler.', '指使某物变得凉爽。', 'v', 'Let''s chill the wine before dinner.', '我们可以在晚餐前把酒冷藏一下。', 4, 'v#371065'
 FROM vocabulary WHERE LOWER(term) = LOWER('chill')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -20575,10 +20559,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'adj_1', 'Real and able to be experienced with your senses; not abstract.', '真实存在的，可以通过感官体验的，不是抽象的。', 'adj', 'Give me concrete examples of your work.', '请给我一些你工作的具体例子。', 2, 'a#13179'
 FROM vocabulary WHERE LOWER(term) = LOWER('concrete')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', '(cause to) solidify, combine', '(使)凝结,(使)结合', 'vt', 'The glue will concrete the pieces together.', '胶水会使这些碎片结合在一起。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('concrete')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- concur
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -20981,10 +20961,6 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_1', 'A large landmass of the Earth, such as Africa or Asia.', '地球上一个大的陆地块，例如非洲或亚洲。', 'n', 'Europe and Asia are part of the Eurasian continent.', '欧洲和亚洲是欧亚大陆的一部分。', 1, 'n#9277520'
-FROM vocabulary WHERE LOWER(term) = LOWER('continent')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'homemade; self-made', '自制的', 'a', 'He made a continent-style pizza.', '他做了一个自制风格的披萨。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('continent')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -22256,7 +22232,7 @@ SELECT id, 'noun_1', 'A dry, barren area of land with very few plants.', '指干
 FROM vocabulary WHERE LOWER(term) = LOWER('desert')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'Of or relating to a desert.', '沙漠的,不毛的', 'a', 'The desert landscape was beautiful.', '沙漠景观很美丽。', 2, NULL
+SELECT id, 'a_1', 'Of or relating to a desert.', '沙漠的,不毛的', 'adj', 'The desert landscape was beautiful.', '沙漠景观很美丽。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('desert')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -24457,10 +24433,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'noun_2', 'A number or symbol placed above and to the right of another, showing how many times it is multiplied by itself.', '在数学中，写在一个数右上方的数字或符号，表示该数自乘的次数。', 'n', 'In the expression two cubed, three is the exponent.', '在“二的三次方”中，三就是指数。', 2, 'n#6825275'
 FROM vocabulary WHERE LOWER(term) = LOWER('exponent')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'explanatory', '说明的', 'a', 'an explanatory note', '一个解释性的注释', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('exponent')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- exposure
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -24602,10 +24574,6 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_1', 'A short story, often involving animals, that teaches a moral lesson.', '指一个简短的故事，通常以动物为角色，用来传达道德教训。', 'n', 'The fable of the tortoise and the hare teaches perseverance.', '龟兔赛跑的寓言教导我们要坚持不懈。', 1, 'n#6383718'
-FROM vocabulary WHERE LOWER(term) = LOWER('fable')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vi_1', 'to invent or fabricate a story or account.', '虚构,作寓言', 'vi', 'He fabled about his adventures in the jungle.', '他编造了一个关于他在丛林探险的故事。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('fable')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -24791,10 +24759,6 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_1', 'A remarkable accomplishment or achievement, often requiring great skill or courage.', '指需要很大的技巧或勇气才能完成的非凡成就。', 'n', 'Climbing Mount Everest was a great feat of endurance.', '攀登珠穆朗玛峰是一项伟大的耐力成就。', 1, 'n#37483'
-FROM vocabulary WHERE LOWER(term) = LOWER('feat')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'pleasing or suitable', '漂亮的,合适的', 'a', 'It was a feat of engineering.', '这真是一项工程壮举。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('feat')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -25163,11 +25127,11 @@ SELECT id, 'noun_2', 'A state of confusion or lack of clarity.', '一种困惑�
 FROM vocabulary WHERE LOWER(term) = LOWER('fog')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vi_1', 'to be covered with fog', '被雾笼罩', 'vi', 'The town was fogging up.', '小镇笼罩在雾中。', 3, NULL
+SELECT id, 'vi_1', 'to be covered with fog', '被雾笼罩', 'v', 'The town was fogging up.', '小镇笼罩在雾中。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('fog')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', 'to make hazy or obscure', '使困惑,以雾笼罩', 'vt', 'The fog blurred the distant mountains.', '雾使远处的山峰变得模糊。', 4, NULL
+SELECT id, 'vt_1', 'to make hazy or obscure', '使困惑,以雾笼罩', 'v', 'The fog blurred the distant mountains.', '雾使远处的山峰变得模糊。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('fog')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -26243,10 +26207,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'verb_1', 'To disguise or conceal the true nature of something.', '掩饰或伪装某事物的真实性质。', 'v', 'The company guised its layoffs as "restructuring."', '公司把裁员伪装成“重组”。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('guise')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'verb_2', 'to disguise or present oneself in a particular way.', '伪装', 'vi', 'He guised himself as a tourist.', '他把自己伪装成一名游客。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('guise')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- gush
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -26488,18 +26448,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('haven')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_2', 'A sheltered port where ships can load or unload.', '一个可供船只装卸货物的避风港口。', 'n', 'The harbor served as a haven for fishing boats.', '这个港口为渔船提供了一个避风港。', 2, 'n#8656633'
-FROM vocabulary WHERE LOWER(term) = LOWER('haven')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', 'to place in a haven', '安置...于港中', 'vt', 'The boat was havened in the bay.', '船被安置在海湾中。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('haven')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_2', 'to give shelter or refuge to', '庇护', 'vt', 'They havened the refugees.', '他们庇护了难民。', 4, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('haven')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_3', 'to enter a haven', '入港', 'vt', 'The ship havened for repairs.', '船只为了修理而入港。', 5, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('haven')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -26843,11 +26791,11 @@ SELECT id, 'noun_2', 'The offspring of genetically dissimilar parents, often fro
 FROM vocabulary WHERE LOWER(term) = LOWER('hybrid')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'Combining different types or elements.', '混合的,杂种的', 'a', 'The car had a hybrid engine.', '这辆车有一个混合动力发动机。', 3, NULL
+SELECT id, 'a_1', 'Combining different types or elements.', '混合的,杂种的', 'adj', 'The car had a hybrid engine.', '这辆车有一个混合动力发动机。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('hybrid')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_2', 'Relating to a mixture of languages.', '混合语的', 'a', 'The language was a hybrid of English and Spanish.', '这种语言是英语和西班牙语的混合。', 4, NULL
+SELECT id, 'a_2', 'Relating to a mixture of languages.', '混合语的', 'adj', 'The language was a hybrid of English and Spanish.', '这种语言是英语和西班牙语的混合。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('hybrid')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -27951,10 +27899,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'verb_2', 'To become united or blended together.', '变得联合或融合在一起。', 'v', 'The two companies are working to integrate their operations.', '这两家公司正在努力整合他们的运营。', 2, 'v#2487489'
 FROM vocabulary WHERE LOWER(term) = LOWER('integrate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'adjective_1', 'complete or entire', '完整的,完全的', 'a', 'The report provides an integrate overview.', '这份报告提供了完整的概述。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('integrate')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- intelligence
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -28039,11 +27983,11 @@ SELECT id, 'noun_1', 'Someone who tries to bring about an agreement between two 
 FROM vocabulary WHERE LOWER(term) = LOWER('intermediary')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'Situated or occurring in the middle.', '中间的', 'a', 'The intermediary layer of the cake was filled with cream.', '蛋糕中间的层次里充满了奶油。', 2, NULL
+SELECT id, 'a_1', 'Situated or occurring in the middle.', '中间的', 'adj', 'The intermediary layer of the cake was filled with cream.', '蛋糕中间的层次里充满了奶油。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('intermediary')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_2', 'Serving as a medium or agent.', '媒介的', 'a', 'An intermediary service connects buyers and sellers.', '一个媒介服务将买家和卖家联系起来。', 3, NULL
+SELECT id, 'a_2', 'Serving as a medium or agent.', '媒介的', 'adj', 'An intermediary service connects buyers and sellers.', '一个媒介服务将买家和卖家联系起来。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('intermediary')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -28068,7 +28012,7 @@ SELECT id, 'adj_2', 'Situated between two extremes.', '指位于两个极端之�
 FROM vocabulary WHERE LOWER(term) = LOWER('intermediate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vi_1', 'to act as a medium or intermediary', '起媒介作用', 'vi', 'The company intermediates between buyers and sellers.', '该公司在买家和卖家之间充当媒介。', 5, NULL
+SELECT id, 'vi_1', 'to act as a medium or intermediary', '起媒介作用', 'v', 'The company intermediates between buyers and sellers.', '该公司在买家和卖家之间充当媒介。', 5, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('intermediate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -28561,15 +28505,11 @@ SELECT id, 'noun_1', 'The act of slowing down or falling behind.', '指速度变
 FROM vocabulary WHERE LOWER(term) = LOWER('lag')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'final', '最后的', 'a', 'The lag player received the prize.', '最后的选手获得了奖品。', 2, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('lag')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'verb_1', 'To hang back or fall behind in movement, progress, or development.', '指在行动、进步或发展中落后或跟不上。', 'v', 'The company''s sales began to lag behind the competition.', '这家公司的销售额开始落后于竞争对手。', 2, 'v#2001894'
 FROM vocabulary WHERE LOWER(term) = LOWER('lag')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'verb_2', 'To confine someone in prison (British slang).', '监禁某人（英式俚语）。', 'v', 'The thief was lagged for ten years.', '那个小偷被监禁了十年。', 4, 'v#2500005'
+SELECT id, 'verb_2', 'To confine someone in prison (British slang).', '监禁某人（英式俚语）。', 'v', 'The thief was lagged for ten years.', '那个小偷被监禁了十年。', 3, 'v#2500005'
 FROM vocabulary WHERE LOWER(term) = LOWER('lag')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -33451,7 +33391,7 @@ SELECT id, 'noun_2', 'The degree to which something deviates from a horizontal o
 FROM vocabulary WHERE LOWER(term) = LOWER('slant')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'adj_1', 'sloping or inclined', '倾斜的', 'a', 'The slant of the hill made it difficult to walk.', '山坡的倾斜使得行走困难。', 3, NULL
+SELECT id, 'adj_1', 'sloping or inclined', '倾斜的', 'adj', 'The slant of the hill made it difficult to walk.', '山坡的倾斜使得行走困难。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('slant')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -33476,11 +33416,11 @@ SELECT id, 'adj_2', 'Small in amount or degree; limited.', '指数量或程度�
 FROM vocabulary WHERE LOWER(term) = LOWER('slim')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vi_1', 'to become thin', '变苗条', 'vi', 'She is slimming down.', '她在减肥。', 3, NULL
+SELECT id, 'vi_1', 'to become thin', '变苗条', 'v', 'She is slimming down.', '她在减肥。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('slim')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', 'to make thin', '使苗条', 'vt', 'He wants to slim his waist.', '他想瘦腰。', 4, NULL
+SELECT id, 'vt_1', 'to make thin', '使苗条', 'v', 'He wants to slim his waist.', '他想瘦腰。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('slim')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -33715,7 +33655,7 @@ SELECT id, 'adj_1', 'Being the only one; single and without others.', '唯一的
 FROM vocabulary WHERE LOWER(term) = LOWER('sole')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', 'to fit with a sole', '上以鞋底,触', 'vt', 'She needs to sole her boots.', '她需要给她的靴子装鞋底。', 4, NULL
+SELECT id, 'vt_1', 'to fit with a sole', '上以鞋底,触', 'v', 'She needs to sole her boots.', '她需要给她的靴子装鞋底。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('sole')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -34166,10 +34106,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'noun_1', 'A sculpture of a person or animal.', '一种雕塑，描绘的是人物或动物。', 'n', 'The park has a beautiful statue of a famous leader.', '公园里有一座著名领导人的漂亮雕像。', 1, 'n#4313985'
 FROM vocabulary WHERE LOWER(term) = LOWER('statue')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'vt_1', 'decorate with statues.', '以雕像装饰', 'vt', 'The city was to be statue.', '这座城市将被雕像装饰。', 2, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('statue')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- steadfast
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -34437,10 +34373,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('sublimate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'verb_2', 'To change directly from a solid to a vapor without melting.', '直接从固体变成气体，不经过熔化过程。', 'v', 'Iodine will sublimate when heated.', '碘在加热时会升华。', 2, 'v#366673'
-FROM vocabulary WHERE LOWER(term) = LOWER('sublimate')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'adjective_1_1', 'pure; lofty; idealized', '纯净化的，高尚的，理想化的，气质', 'a', 'a sublimate ideal', '一个纯粹的理想', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('sublimate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -34894,10 +34826,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('taunt')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'verb_1', 'To mock or provoke someone persistently with insulting remarks.', '用侮辱性的话持续嘲笑或激怒某人。', 'v', 'The bullies taunted the smaller boy.', '那些恶霸嘲笑那个瘦小的男孩。', 2, 'v#852181'
-FROM vocabulary WHERE LOWER(term) = LOWER('taunt')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'very high', '很高的', 'a', 'The rating was a taunt to the critics.', '这个评分是对评论家的嘲弄。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('taunt')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -35837,7 +35765,7 @@ SELECT id, 'noun_1', 'An electrical appliance used to clean floors and other sur
 FROM vocabulary WHERE LOWER(term) = LOWER('vacuum')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'of or relating to a vacuum.', '真空的', 'a', 'a vacuum chamber', '真空室', 2, NULL
+SELECT id, 'a_1', 'of or relating to a vacuum.', '真空的', 'adj', 'a vacuum chamber', '真空室', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('vacuum')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -36212,10 +36140,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('ware')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'v_1', 'To be aware of or pay attention to.', '留心,小心', 'v', 'Ware the broken glass on the path.', '当心小路上的碎玻璃。', 2, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('ware')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'Aware; conscious.', '知道的,意识到的', 'a', 'He was ware of the situation.', '他知道情况。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('ware')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -39414,7 +39338,7 @@ SELECT id, 'noun_2', 'A person who is a member of one''s class, group, or profes
 FROM vocabulary WHERE LOWER(term) = LOWER('fellow')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'sharing the same opinions or interests', '同道的', 'a', 'We are fellow travelers in this journey.', '我们在这段旅程中是同行的。', 3, NULL
+SELECT id, 'a_1', 'sharing the same opinions or interests', '同道的', 'adj', 'We are fellow travelers in this journey.', '我们在这段旅程中是同行的。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('fellow')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -46266,7 +46190,7 @@ SELECT id, 'noun_1', 'An animal that has a backbone or spinal column, and a skel
 FROM vocabulary WHERE LOWER(term) = LOWER('vertebrate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'a_1', 'having a backbone or spinal column', '有脊柱的', 'a', 'A vertebrate animal.', '一种有脊柱的动物。', 2, NULL
+SELECT id, 'a_1', 'having a backbone or spinal column', '有脊柱的', 'adj', 'A vertebrate animal.', '一种有脊柱的动物。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('vertebrate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -48843,15 +48767,7 @@ SELECT id, 'sense_2', 'Of or relating to tourism.', '旅游的', 'adj', 'The tou
 FROM vocabulary WHERE LOWER(term) = LOWER('tourist')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'to visit as a tourist.', '在旅行参观', 'vt', 'They toured the ancient ruins.', '他们参观了古老的遗迹。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('tourist')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'to travel for pleasure.', '旅游；观光', 'vi', 'We plan to tour Europe next summer.', '我们计划明年夏天去欧洲旅游。', 4, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('tourist')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'In tourist class.', '坐旅游车厢；坐经济舱', 'adv', 'They flew tourist class.', '他们乘坐经济舱飞行。', 5, NULL
+SELECT id, 'sense_5', 'In tourist class.', '坐旅游车厢；坐经济舱', 'adv', 'They flew tourist class.', '他们乘坐经济舱飞行。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('tourist')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -49230,10 +49146,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('pleasure')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'sense_4', 'to give pleasure or satisfaction to someone', '使某人高兴；使某人满意', 'v', 'The music pleasured everyone at the party.', '音乐使聚会上的每个人都感到愉悦。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('pleasure')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'to feel pleasure or take delight in something', '感到高兴；从中获得乐趣', 'vi', 'She pleasures in reading old letters.', '她喜欢从阅读旧信件中获得乐趣。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('pleasure')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -49902,10 +49814,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'noun_2', 'A person from England.', '来自英国的人。', 'n', 'He is an English citizen.', '他是英国公民。', 4, 'n#9752082'
 FROM vocabulary WHERE LOWER(term) = LOWER('english')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'To translate into English.', '把…译成英语', 'vt', 'Please English this document.', '请把这份文件翻译成英语。', 5, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('english')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- cool
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -50150,10 +50058,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('fun')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_2', 'Excited and lively activity, often involving a sudden start or escalation.', '指激动人心的活动，通常涉及突然的开始或升级。', 'n', 'The fun really started when the music began.', '音乐开始后，欢乐才真正开始。', 2, 'n#1263236'
-FROM vocabulary WHERE LOWER(term) = LOWER('fun')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'to joke or play pranks', '开玩笑', 'vi', 'They were just funning around.', '他们只是在开玩笑。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('fun')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -51315,7 +51219,7 @@ SELECT id, 'verb_1', 'To face and overcome a difficult or dangerous situation wi
 FROM vocabulary WHERE LOWER(term) = LOWER('weather')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'exposed to wind', '迎风的', 'a', 'The weather side of the house is always damp.', '房屋迎风的一面总是潮湿的。', 4, NULL
+SELECT id, 'sense_5', 'exposed to wind', '迎风的', 'adj', 'The weather side of the house is always damp.', '房屋迎风的一面总是潮湿的。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('weather')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -51700,10 +51604,6 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_1', 'A small body of still water, often smaller than a lake.', '一个比湖小、水面平静的水域。', 'n', 'We saw ducks swimming in the pond.', '我们在池塘里看见鸭子在游泳。', 1, 'n#9420266'
-FROM vocabulary WHERE LOWER(term) = LOWER('pond')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'to build or create a pond', '筑成池塘', 'vt', 'They decided to pond the area.', '他们决定在那个区域筑池塘。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('pond')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -52610,27 +52510,19 @@ SELECT id, 'noun_1', 'A flowering shrub of the genus Rosa, known for its beautif
 FROM vocabulary WHERE LOWER(term) = LOWER('rose')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'noun_2', 'A light-colored, dry wine made from red grapes.', '一种由红葡萄制成的浅色干酒。', 'n', 'He ordered a glass of rosé wine with dinner.', '他晚餐时点了一杯桃红葡萄酒。', 5, 'n#7909228'
+SELECT id, 'noun_2', 'A light-colored, dry wine made from red grapes.', '一种由红葡萄制成的浅色干酒。', 'n', 'He ordered a glass of rosé wine with dinner.', '他晚餐时点了一杯桃红葡萄酒。', 3, 'n#7909228'
 FROM vocabulary WHERE LOWER(term) = LOWER('rose')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'adj_1', 'Having a pale pink or purplish-pink color, like the color of a rose.', '呈现出玫瑰般的淡粉色或紫粉色。', 'adj', 'She wore a rose dress to the party.', '她穿了一件玫瑰色的裙子去参加聚会。', 4, 'a#383235'
+SELECT id, 'adj_1', 'Having a pale pink or purplish-pink color, like the color of a rose.', '呈现出玫瑰般的淡粉色或紫粉色。', 'adj', 'She wore a rose dress to the party.', '她穿了一件玫瑰色的裙子去参加聚会。', 2, 'a#383235'
 FROM vocabulary WHERE LOWER(term) = LOWER('rose')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'To tinge pink or rosy.', '使成玫瑰色。', 'vt', 'The sunset rose the clouds with color.', '日落使云彩染上了颜色。', 4, NULL
+SELECT id, 'sense_7', 'To rise (archaic).', '（古语）升起。', 'v', 'The sun rose early that morning.', '那天早上太阳很早升起。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('rose')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'To cause to blush.', '使（面颊）发红。', 'vt', 'The compliment made her cheeks rose.', '那句赞美使她的脸颊发红了。', 5, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('rose')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_7', 'To rise (archaic).', '（古语）升起。', 'vi', 'The sun rose early that morning.', '那天早上太阳很早升起。', 6, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('rose')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_8', 'To increase in number or amount.', '(数量)增加。', 'vi', 'Costs rose sharply.', '成本急剧上涨。', 7, NULL
+SELECT id, 'sense_8', 'To increase in number or amount.', '(数量)增加。', 'v', 'Costs rose sharply.', '成本急剧上涨。', 5, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('rose')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -52953,10 +52845,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'sense_2', 'Made of or containing silk.', '丝的；丝绸的；丝制的。', 'adj', 'The silk dress felt luxurious.', '这件丝绸连衣裙摸起来很奢华。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('silk')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'To form the silky pistils and styles on an ear of corn.', '（玉米）长出花丝，抽丝。', 'vi', 'The corn started silking in mid-July.', '玉米在七月中旬开始抽丝。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('silk')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- should
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -53100,27 +52988,23 @@ SELECT id, 'adv_1', 'Moving to a place or position across a space.', '移动到�
 FROM vocabulary WHERE LOWER(term) = LOWER('over')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'to pass over', '越过', 'vt', 'Jump over the fence.', '跳过栅栏。', 2, NULL
+SELECT id, 'sense_3', 'Higher than or exceeding a quantity or level.', '高于；超过某个数量或水平。', 'prep', 'The temperature is over 30 degrees.', '气温超过30度。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('over')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'Higher than or exceeding a quantity or level.', '高于；超过某个数量或水平。', 'prep', 'The temperature is over 30 degrees.', '气温超过30度。', 3, NULL
+SELECT id, 'sense_4', 'On top of, across, or covering something.', '在…之上；越过；覆盖着。', 'prep', 'The cat jumped over the fence.', '猫跳过了栅栏。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('over')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'On top of, across, or covering something.', '在…之上；越过；覆盖着。', 'prep', 'The cat jumped over the fence.', '猫跳过了栅栏。', 4, NULL
+SELECT id, 'adj_1', 'Having come to an end; finished.', '已经结束；完成。', 'adj', 'The game is over, let''s go home.', '游戏结束了，我们回家吧。', 4, 'a#1006696'
 FROM vocabulary WHERE LOWER(term) = LOWER('over')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'adj_1', 'Having come to an end; finished.', '已经结束；完成。', 'adj', 'The game is over, let''s go home.', '游戏结束了，我们回家吧。', 5, 'a#1006696'
+SELECT id, 'sense_6', 'During the course of a period of time.', '在…期间；伴随着。', 'prep', 'We talked over coffee.', '我们边喝咖啡边聊天。', 5, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('over')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'During the course of a period of time.', '在…期间；伴随着。', 'prep', 'We talked over coffee.', '我们边喝咖啡边聊天。', 6, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('over')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_7', 'Used as a surname.', '用作姓氏。', 'n', 'Mr. Over runs the local bakery.', '奥弗先生经营当地的一家面包店。', 7, NULL
+SELECT id, 'sense_7', 'Used as a surname.', '用作姓氏。', 'n', 'Mr. Over runs the local bakery.', '奥弗先生经营当地的一家面包店。', 6, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('over')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -53134,10 +53018,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('football')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_2', 'The oval-shaped ball used in American football.', '美式足球比赛中使用的椭圆形球。', 'n', 'The quarterback threw the football downfield.', '四分卫将橄榄球传向前场。', 2, 'n#3383611'
-FROM vocabulary WHERE LOWER(term) = LOWER('football')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'To play football.', '踢足球；打橄榄球。', 'vi', 'The boys were footballing in the park.', '男孩们在公园里踢足球。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('football')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -58302,10 +58182,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'sense_8', 'To love or adore, especially as expressed with a heart symbol.', '喜爱；热爱（常以爱心符号表示）。', 'v', 'Her bumper sticker says, "I heart my dog."', '她的保险杠贴纸写着“我超爱我的狗”。', 6, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('heart')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_9', 'to form a close bond', '结心', 'vi', 'They hearted with each other.', '他们彼此结心。', 7, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('heart')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- south
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -60601,19 +60477,19 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
   'may', FALSE, FALSE, NULL, 'might', '/meɪ/', 'used to express possibility, permission, or a wish', 'aux.,n,modal verb'
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_1', 'can, be able to', '可以，能够', 'aux.', 'I may go to the store later.', '我可能稍后去商店。', 1, NULL
+SELECT id, 'sense_1', 'can, be able to', '可以，能够', 'aux', 'I may go to the store later.', '我可能稍后去商店。', 1, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('may')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'expresses possibility or permission', '可能，也许', 'modal verb', 'It may rain tomorrow.', '明天可能会下雨。', 2, NULL
+SELECT id, 'sense_2', 'expresses possibility or permission', '可能，也许', 'aux', 'It may rain tomorrow.', '明天可能会下雨。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('may')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'be possible or likely', '可能，也许', 'aux.', 'It may rain tomorrow.', '明天可能会下雨。', 3, NULL
+SELECT id, 'sense_3', 'be possible or likely', '可能，也许', 'aux', 'It may rain tomorrow.', '明天可能会下雨。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('may')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'wish or hope for someone', '祝，愿', 'aux.', 'May you have a happy birthday!', '祝你生日快乐！', 4, NULL
+SELECT id, 'sense_4', 'wish or hope for someone', '祝，愿', 'aux', 'May you have a happy birthday!', '祝你生日快乐！', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('may')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -61256,14 +61132,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('easy')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'adj_2', 'Free from worry or anxiety; relaxed and calm.', '指心情放松，没有担忧或焦虑。', 'adj', 'I felt easy after finishing the exam.', '考试结束后，我感到很轻松。', 2, 'a#825684'
-FROM vocabulary WHERE LOWER(term) = LOWER('easy')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'to stop rowing', '停止划桨', 'vi', '"Easy!" the coxswain shouted, and the crew stopped.', '“停桨！”舵手喊道，船员们停了下来。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('easy')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'to give an order to stop rowing', '发出停划命令', 'vt', 'The cox called, "Easy oars!" to stop the boat.', '舵手喊道：“停桨！”让船停下来。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('easy')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -62158,22 +62026,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'noun_2', 'A suite of rooms usually on one floor of an apartment house.', '通常在一栋公寓楼里的一层中的一套房间。', 'n', 'She lives in a small flat in the city.', '她住在城市里的一套小公寓里。', 5, 'n#2729230'
 FROM vocabulary WHERE LOWER(term) = LOWER('flat')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_12', 'to make level.', '使变平。', 'vt', 'Flatten the dough.', '把面团压平。', 6, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('flat')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_13', 'to lower (a musical note) by a semitone.', '使（音调）下降，尤指降半音。', 'vt', 'He flattened the note.', '他把音调压低了。', 7, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('flat')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_14', 'to become level.', '逐渐变平。', 'vi', 'The ground flattens out.', '地面逐渐变平。', 8, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('flat')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_15', 'to sing or play a note at a lower pitch.', '以降调唱（或奏）。', 'vi', 'He flattened the melody.', '他把旋律降调了。', 9, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('flat')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- below
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -62511,11 +62363,7 @@ SELECT id, 'adj_1', 'Extremely detailed and careful.', '非常详细和仔细的
 FROM vocabulary WHERE LOWER(term) = LOWER('minute')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_10', 'to take down (details) in writing', '记录,摘录', 'vt', 'Please minute the meeting’s decisions.', '请记录会议的决定。', 7, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('minute')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_11', 'to measure the time of', '测定时间', 'vt', 'The scientist minute the reaction time.', '科学家测量了反应时间。', 8, NULL
+SELECT id, 'sense_10', 'to take down (details) in writing', '记录,摘录', 'v', 'Please minute the meeting’s decisions.', '请记录会议的决定。', 7, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('minute')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -63248,10 +63096,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('tea')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_2', 'Light refreshments served with tea.', '一种在享用茶点时提供的轻食，通常包括小点心。', 'n', 'Let''s have afternoon tea with scones and jam.', '我们一起享用茶点，有司康和果酱。', 2, 'n#7591075'
-FROM vocabulary WHERE LOWER(term) = LOWER('tea')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'To drink tea; to serve tea.', '喝茶；进茶点', 'vi', 'Let''s tea at four o''clock.', '我们下午四点喝茶吧。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('tea')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -65495,7 +65339,7 @@ SELECT id, 'noun_2', 'A discussion intended to reach an agreement or resolve an 
 FROM vocabulary WHERE LOWER(term) = LOWER('conference')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'to hold or attend a series of meetings', '举行或参加（系列）会议', 'vi', 'She will conference with her team tomorrow.', '她明天将与团队开会。', 3, NULL
+SELECT id, 'sense_3', 'to hold or attend a series of meetings', '举行或参加（系列）会议', 'v', 'She will conference with her team tomorrow.', '她明天将与团队开会。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('conference')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -65627,7 +65471,7 @@ SELECT id, 'verb_1', 'To operate an airplane.', '指驾驶或操控飞机。', '
 FROM vocabulary WHERE LOWER(term) = LOWER('pilot')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_8', 'experimental or tentative', '试验性的', 'a', 'This is a pilot program.', '这是一个试验计划。', 5, NULL
+SELECT id, 'sense_8', 'experimental or tentative', '试验性的', 'adj', 'This is a pilot program.', '这是一个试验计划。', 5, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('pilot')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -67761,11 +67605,7 @@ SELECT id, 'noun_2', 'Someone who is present and participates in a meeting.', '�
 FROM vocabulary WHERE LOWER(term) = LOWER('attendant')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'present at an event or meeting', '出席的', 'a', 'An attendant doctor was always present.', '一位出席的医生总是到场。', 4, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('attendant')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'paying attention or being alert', '注意的,在场的', 'a', 'The attendant nurse monitored the patient closely.', '这位注意的护士密切监测病人。', 5, NULL
+SELECT id, 'sense_4', 'present at an event or meeting', '出席的', 'adj', 'An attendant doctor was always present.', '一位出席的医生总是到场。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('attendant')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -67952,7 +67792,7 @@ SELECT id, 'noun_2', 'A small mark or stain, often caused by dirt.', '指由污�
 FROM vocabulary WHERE LOWER(term) = LOWER('spot')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'Present at a particular place or time.', '当场的,现场的', 'a', 'The spot price of gold.', '黄金的现货价格。', 3, NULL
+SELECT id, 'sense_2', 'Present at a particular place or time.', '当场的,现场的', 'adj', 'The spot price of gold.', '黄金的现货价格。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('spot')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -69477,7 +69317,7 @@ SELECT id, 'noun_2', 'Someone who needs a substance regularly and experiences wi
 FROM vocabulary WHERE LOWER(term) = LOWER('addict')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'to cause someone to become addicted to something', '使沉溺,使上瘾', 'vt', 'The game quickly addicted him.', '这个游戏很快使他上瘾了。', 3, NULL
+SELECT id, 'sense_3', 'to cause someone to become addicted to something', '使沉溺,使上瘾', 'v', 'The game quickly addicted him.', '这个游戏很快使他上瘾了。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('addict')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -72194,7 +72034,7 @@ SELECT id, 'noun_2', 'A part that can be separated from or attached to a larger 
 FROM vocabulary WHERE LOWER(term) = LOWER('component')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'Combining or united to form a whole.', '组成的，合成的。', 'a', 'The component parts make up the final product.', '组成部分构成了最终产品。', 3, NULL
+SELECT id, 'sense_3', 'Combining or united to form a whole.', '组成的，合成的。', 'adj', 'The component parts make up the final product.', '组成部分构成了最终产品。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('component')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -74021,11 +73861,7 @@ SELECT id, 'verb_2', 'To differ from what is expected or considered normal.', '�
 FROM vocabulary WHERE LOWER(term) = LOWER('deviate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'unconventional.', '脱离常规的', 'a', 'She has a deviate style of dress.', '她的穿着风格很另类。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('deviate')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'A person who deviates from accepted norms.', '脱离常规的人', 'n', 'He was considered a deviate by his peers.', '他的同伴们认为他是个另类。', 4, NULL
+SELECT id, 'sense_4', 'A person who deviates from accepted norms.', '脱离常规的人', 'n', 'He was considered a deviate by his peers.', '他的同伴们认为他是个另类。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('deviate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -74684,10 +74520,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'verb_1', 'To create a preliminary outline or sketch for something, like a speech or plan.', '指为某事制定初步的提纲或草图，例如演讲或计划。', 'v', 'She needs to draft a proposal for the new project.', '她需要为新项目起草一份提案。', 3, 'v#1705493'
 FROM vocabulary WHERE LOWER(term) = LOWER('draft')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'Available for use or service.', '供役使的', 'a', 'He was a draft horse.', '他是一匹役用马。', 4, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('draft')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- drag
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -75168,10 +75000,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('endure')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'verb_5', 'To continue to exist or remain.', '继续存在或保持。', 'v', 'Her memory will endure for many years.', '她的记忆将持续许多年。', 5, 'v#2653599'
-FROM vocabulary WHERE LOWER(term) = LOWER('endure')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'showing patience and tolerance in bearing suffering', '忍耐', 'a', 'She is an endure person.', '她是一个忍耐的人。', 6, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('endure')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -76728,11 +76556,11 @@ SELECT id, 'sense_5', 'To fit or adjust so as to match something else exactly.',
 FROM vocabulary WHERE LOWER(term) = LOWER('gear')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'To connect.', '连接上', 'vi', 'The gears meshed together.', '齿轮啮合在一起。', 6, NULL
+SELECT id, 'sense_6', 'To connect.', '连接上', 'v', 'The gears meshed together.', '齿轮啮合在一起。', 6, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('gear')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_7', 'To be suitable.', '适合', 'vi', 'The software is geared towards beginners.', '该软件面向初学者。', 7, NULL
+SELECT id, 'sense_7', 'To be suitable.', '适合', 'v', 'The software is geared towards beginners.', '该软件面向初学者。', 7, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('gear')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -78177,10 +78005,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'sense_3', 'A person newly admitted into a group or activity; a novice.', '刚加入某团体或活动的新成员；新手。', 'n', 'The initiate studied the group''s secret rituals.', '这位新成员学习了团体的秘密仪式。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('initiate')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'newly joined', '新加入的', 'a', 'The initiate was eager to learn.', '新加入者渴望学习。', 4, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('initiate')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- inject
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -79383,19 +79207,15 @@ SELECT id, 'noun_3', 'A large body of matter that has no definite shape.', '指�
 FROM vocabulary WHERE LOWER(term) = LOWER('mass')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'large in scale or extent', '大规模的', 'a', 'The project was a mass undertaking.', '这个项目是一项大规模的事业。', 4, NULL
+SELECT id, 'sense_3', 'large in scale or extent', '大规模的', 'adj', 'The project was a mass undertaking.', '这个项目是一项大规模的事业。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('mass')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'concentrated or dense', '集中的', 'a', 'A mass of information was presented.', '呈现了大量的信息。', 5, NULL
+SELECT id, 'sense_6', 'Relating to a large group of people, especially the general public.', '与大众相关的，尤指普通大众。', 'adj', 'The city expanded its mass transit system.', '这座城市扩大了公共交通系统。', 5, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('mass')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'Relating to a large group of people, especially the general public.', '与大众相关的，尤指普通大众。', 'adj', 'The city expanded its mass transit system.', '这座城市扩大了公共交通系统。', 6, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('mass')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'verb_1', 'To gather together into a large group or crowd.', '指聚集到一起形成一大群或人群。', 'v', 'People were massing in the town square.', '人们聚集在广场上。', 7, 'v#2028014'
+SELECT id, 'verb_1', 'To gather together into a large group or crowd.', '指聚集到一起形成一大群或人群。', 'v', 'People were massing in the town square.', '人们聚集在广场上。', 6, 'v#2028014'
 FROM vocabulary WHERE LOWER(term) = LOWER('mass')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -80218,10 +80038,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'noun_2', 'Someone who disagrees with you or tries to stop you.', '与你意见不一致或试图阻止你的人。', 'n', 'He was a strong opponent of the new law.', '他是这项新法律的强烈反对者。', 2, 'n#9792668'
 FROM vocabulary WHERE LOWER(term) = LOWER('opponent')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'acting against someone or something', '敌对的,反对的', 'a', 'They were opponents in the election.', '他们在选举中是对手。', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('opponent')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- optical
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -80533,7 +80349,7 @@ SELECT id, 'noun_2', 'A circle of latitude on the Earth''s surface, parallel to 
 FROM vocabulary WHERE LOWER(term) = LOWER('parallel')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'be or act in parallel to', '与. . . 平行,与. . .', 'vt', 'The events parallel each other in many ways.', '这些事件在很多方面是平行的。', 4, NULL
+SELECT id, 'sense_6', 'be or act in parallel to', '与. . . 平行,与. . .', 'v', 'The events parallel each other in many ways.', '这些事件在很多方面是平行的。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('parallel')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -80684,7 +80500,7 @@ SELECT id, 'sense_3', 'of the highest kind or quality', '最高的，巅峰的',
 FROM vocabulary WHERE LOWER(term) = LOWER('peak')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_6', 'highest; greatest', '最高的', 'a', 'The peak season for tourism is summer.', '旅游的旺季是夏天。', 4, NULL
+SELECT id, 'sense_6', 'highest; greatest', '最高的', 'adj', 'The peak season for tourism is summer.', '旅游的旺季是夏天。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('peak')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
@@ -80819,7 +80635,7 @@ SELECT id, 'noun_2', 'The way something appears based on the viewer''s position.
 FROM vocabulary WHERE LOWER(term) = LOWER('perspective')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'relating to or involving perspective', '透视的', 'a', 'The perspective drawing showed the building''s depth.', '透视图显示了建筑物深度。', 3, NULL
+SELECT id, 'sense_5', 'relating to or involving perspective', '透视的', 'adj', 'The perspective drawing showed the building''s depth.', '透视图显示了建筑物深度。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('perspective')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -81696,7 +81512,7 @@ SELECT id, 'noun_1', 'A substance in food that is necessary for growth and repai
 FROM vocabulary WHERE LOWER(term) = LOWER('protein')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_3', 'of or relating to protein', '蛋白质的', 'a', 'a protein structure', '蛋白质结构', 2, NULL
+SELECT id, 'sense_3', 'of or relating to protein', '蛋白质的', 'adj', 'a protein structure', '蛋白质结构', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('protein')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -81860,10 +81676,6 @@ INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_sp
 SELECT id, 'noun_1', 'A term, now often considered offensive, used to refer to a gay man.', '指男同性恋者的说法，现常被认为具有冒犯性。', 'n', 'In the past, ''queer'' was often used as an insult.', '过去，“queer”一词常被用作侮辱性称呼。', 2, 'n#10095821'
 FROM vocabulary WHERE LOWER(term) = LOWER('queer')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'to spoil or ruin', '搞糟', 'vt', 'Don''t queer my chances of getting the job!', '别毁掉我得到这份工作的机会！', 3, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('queer')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
 -- quiver
 INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_forms, pronunciation, definition_en, part_of_speech) VALUES (
@@ -81879,10 +81691,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('quiver')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_2', 'A container for holding arrows, typically for archers.', '用于存放箭的容器，通常是给弓箭手用的。', 'n', 'The archer checked his quiver before the competition.', '射箭手在比赛前检查了他的箭囊。', 3, 'n#4042312'
-FROM vocabulary WHERE LOWER(term) = LOWER('quiver')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'easily moved or excited', '敏捷的', 'a', 'She had a quiver in her voice.', '她的声音有些颤抖。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('quiver')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -82047,7 +81855,7 @@ SELECT id, 'verb_1', 'To participate in an uprising against a government or auth
 FROM vocabulary WHERE LOWER(term) = LOWER('rebel')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'showing a wish to disobey or fight against authority.', '造反的,反抗的', 'a', 'He had a rebel attitude.', '他有一种反叛的态度。', 2, NULL
+SELECT id, 'sense_2', 'showing a wish to disobey or fight against authority.', '造反的,反抗的', 'adj', 'He had a rebel attitude.', '他有一种反叛的态度。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('rebel')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -82552,10 +82360,6 @@ INSERT INTO vocabulary (term, is_phrase, is_abbreviation, full_form, irregular_f
   'remnant', FALSE, FALSE, NULL, NULL, '/ˈremnənt/', 'a small remaining quantity of something', 'n,a'
 ) ON CONFLICT DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_1', 'remaining or incomplete', '剩余的,残余的', 'a', 'The remnant of the cake was delicious.', '蛋糕的剩余部分非常美味。', 1, NULL
-FROM vocabulary WHERE LOWER(term) = LOWER('remnant')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'noun_1', 'A small part or portion that remains after the main part no longer exists.', '指主要部分消失后留下的少量部分或残余。', 'n', 'The remnants of the old castle stood on the hill.', '古老城堡的遗迹矗立在山丘上。', 1, 'n#13833396'
 FROM vocabulary WHERE LOWER(term) = LOWER('remnant')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
@@ -83050,7 +82854,7 @@ SELECT id, 'noun_1', 'Someone you compete against, hoping to win.', '指你希�
 FROM vocabulary WHERE LOWER(term) = LOWER('rival')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_2', 'competitive', '竞争的', 'a', 'The two companies have a rival relationship.', '这两家公司之间存在竞争关系。', 2, NULL
+SELECT id, 'sense_2', 'competitive', '竞争的', 'adj', 'The two companies have a rival relationship.', '这两家公司之间存在竞争关系。', 2, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('rival')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -83626,7 +83430,7 @@ SELECT id, 'adj_3', 'So thin as to be almost transparent.', '非常薄，几乎�
 FROM vocabulary WHERE LOWER(term) = LOWER('sheer')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'to turn aside; to avoid.', '躲开,躲避,偏航', 'vi', 'The ship had to sheer off course.', '船只不得不改变航向。', 4, NULL
+SELECT id, 'sense_4', 'to turn aside; to avoid.', '躲开,躲避,偏航', 'v', 'The ship had to sheer off course.', '船只不得不改变航向。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('sheer')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -83998,7 +83802,7 @@ SELECT id, 'verb_1', 'To break into pieces by striking or knocking over.', '通�
 FROM vocabulary WHERE LOWER(term) = LOWER('smash')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'Remarkable; outstanding.', '非常的,了不起的', 'a', 'She made a smash hit with her new song.', '她的新歌取得了巨大的成功。', 3, NULL
+SELECT id, 'sense_4', 'Remarkable; outstanding.', '非常的,了不起的', 'adj', 'She made a smash hit with her new song.', '她的新歌取得了巨大的成功。', 3, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('smash')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -84365,10 +84169,6 @@ FROM vocabulary WHERE LOWER(term) = LOWER('stagger')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
 SELECT id, 'verb_3', 'To shock or overwhelm someone.', '指使某人震惊或不知所措。', 'v', 'The news of the accident staggered her.', '关于事故的消息让她震惊不已。', 3, 'v#1814093'
-FROM vocabulary WHERE LOWER(term) = LOWER('stagger')
-ON CONFLICT (vocab_id, sense_key) DO NOTHING;
-INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_4', 'arranged in a way that is uneven or irregular', '交错的', 'a', 'The trees were planted in a stagger pattern.', '树木以交错的模式种植。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('stagger')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
@@ -84765,7 +84565,7 @@ SELECT id, 'noun_3', 'A meeting between leaders of different countries.', '指�
 FROM vocabulary WHERE LOWER(term) = LOWER('summit')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 INSERT INTO meaning (vocab_id, sense_key, definition, explanation_zh, part_of_speech, example_sentence, example_sentence_zh, rank, wordnet_sense_id)
-SELECT id, 'sense_5', 'Of or relating to a meeting between heads of state or government.', '指国家或政府首脑之间举行的会议的。', 'a', 'The summit meeting was held in Geneva.', '首脑会议在日内瓦举行。', 4, NULL
+SELECT id, 'sense_5', 'Of or relating to a meeting between heads of state or government.', '指国家或政府首脑之间举行的会议的。', 'adj', 'The summit meeting was held in Geneva.', '首脑会议在日内瓦举行。', 4, NULL
 FROM vocabulary WHERE LOWER(term) = LOWER('summit')
 ON CONFLICT (vocab_id, sense_key) DO NOTHING;
 
