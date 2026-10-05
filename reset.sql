@@ -202,6 +202,8 @@ CREATE TABLE
     status            INT    NOT NULL DEFAULT 0 CHECK (status BETWEEN 0 AND 10),
     -- How the row was CREATED; written once, never updated (status changes live in meaning_review).
     source            TEXT   NOT NULL CHECK (source IN ('ONBOARDING', 'ARTICLE', 'QUIZ', 'MANUAL', 'UNKNOWN')),
+    -- The article that taught this meaning; NULL for other sources. Written once, like source.
+    source_article_id UUID   REFERENCES article (id) ON DELETE SET NULL,
     first_seen_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     learned_at        TIMESTAMPTZ,
     last_reviewed_at  TIMESTAMPTZ,
@@ -210,6 +212,10 @@ CREATE TABLE
 
 -- Allows reverse lookup: which users have encountered a given meaning?
 CREATE INDEX IF NOT EXISTS idx_user_meaning_meaning_id ON user_meaning (meaning_id);
+
+-- Groups a reader's Learning meanings by the article (and so the topic) that taught them, and
+-- keeps ON DELETE SET NULL cheap when an article is deleted.
+CREATE INDEX IF NOT EXISTS idx_user_meaning_source_article_id ON user_meaning (source_article_id);
 
 -- =========================
 -- 7) user <-> vocabulary relation

@@ -49,6 +49,7 @@ erDiagram
     article ||--o{ user_article : "article_id"
     app_user ||--o{ user_article : "user_id"
     meaning ||--o{ user_meaning : "meaning_id"
+    article ||--o{ user_meaning : "source_article_id"
     app_user ||--o{ user_meaning : "user_id"
     vocab_level ||--o{ user_vocab_level : "level_id"
     app_user ||--o{ user_vocab_level : "user_id"
@@ -221,6 +222,7 @@ user <-> meaning relation
 | `meaning_id` | bigint | no |  | PK; FK -> `meaning` (on delete cascade) |
 | `status` | integer | no | 0 |  |
 | `source` | text | no |  |  |
+| `source_article_id` | uuid | yes |  | FK -> `article` (on delete set null) |
 | `first_seen_at` | timestamp with time zone | no | now() |  |
 | `learned_at` | timestamp with time zone | yes |  |  |
 | `last_reviewed_at` | timestamp with time zone | yes |  |  |
@@ -234,6 +236,7 @@ user <-> meaning relation
 **Indexes**
 
 - `idx_user_meaning_meaning_id`: `index on user_meaning USING btree (meaning_id)`
+- `idx_user_meaning_source_article_id`: `index on user_meaning USING btree (source_article_id)`
 
 ## user_vocabulary
 
