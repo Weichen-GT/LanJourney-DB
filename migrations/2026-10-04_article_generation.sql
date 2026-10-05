@@ -60,6 +60,24 @@ UPDATE user_meaning SET source = 'REWRITE' WHERE source = 'ARTICLE';
 -- A leftover default from the 2026-10-03 migration would write the retired 'ARTICLE'.
 ALTER TABLE user_meaning ALTER COLUMN source DROP DEFAULT;
 
+-- -------------------------------------------------------------------------
+-- P9: user_meaning.last_seen_at -- set on every article exposure, counted or
+-- not (last_reviewed_at only moves with graded reviews and status changes).
+-- Backfilled from the latest ARTICLE row in meaning_review; only empty values
+-- are filled, so a re-run never overwrites what the backend has written.
+-- -------------------------------------------------------------------------
+ALTER TABLE user_meaning ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ;
+
+UPDATE user_meaning um
+   SET last_seen_at = seen.last_seen
+  FROM (SELECT user_id, meaning_id, MAX(reviewed_at) AS last_seen
+          FROM meaning_review
+         WHERE source = 'ARTICLE'
+         GROUP BY user_id, meaning_id) seen
+ WHERE um.user_id = seen.user_id
+   AND um.meaning_id = seen.meaning_id
+   AND um.last_seen_at IS NULL;
+
 COMMIT;
 
 
@@ -102,6 +120,20 @@ SELECT check_name, ok FROM (
   SELECT 'P4 source has no default',
          (SELECT column_default IS NULL FROM information_schema.columns
            WHERE table_name = 'user_meaning' AND column_name = 'source')
+  -- P9
+  UNION ALL
+  SELECT 'P9 user_meaning.last_seen_at column exists',
+         EXISTS (SELECT 1 FROM information_schema.columns
+                  WHERE table_name = 'user_meaning' AND column_name = 'last_seen_at'
+                    AND data_type = 'timestamp with time zone')
+  UNION ALL
+  SELECT 'P9 every meaning with an article exposure has last_seen_at',
+         NOT EXISTS (SELECT 1 FROM user_meaning um
+                      WHERE um.last_seen_at IS NULL
+                        AND EXISTS (SELECT 1 FROM meaning_review r
+                                     WHERE r.user_id = um.user_id AND r.meaning_id = um.meaning_id
+                                       AND r.source = 'ARTICLE'))
+  -- after PART 3
   UNION ALL
   SELECT 'P4 (true only after PART 3) CHECK no longer allows ARTICLE',
          NOT EXISTS (SELECT 1 FROM pg_constraint

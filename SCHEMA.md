@@ -225,7 +225,8 @@ user <-> meaning relation
 | `source_article_id` | uuid | yes |  | FK -> `article` (on delete set null) |
 | `first_seen_at` | timestamp with time zone | no | now() |  |
 | `learned_at` | timestamp with time zone | yes |  |  |
-| `last_reviewed_at` | timestamp with time zone | yes |  |  |
+| `last_reviewed_at` | timestamp with time zone | yes |  | graded reviews and status changes; the due check counts from it |
+| `last_seen_at` | timestamp with time zone | yes |  | every article exposure, counted or not (article planner) |
 
 **Constraints**
 

@@ -208,7 +208,8 @@ CREATE TABLE
     source_article_id UUID   REFERENCES article (id) ON DELETE SET NULL,
     first_seen_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     learned_at        TIMESTAMPTZ,
-    last_reviewed_at  TIMESTAMPTZ,
+    last_reviewed_at  TIMESTAMPTZ,            -- graded reviews and status changes; the due check counts from it
+    last_seen_at      TIMESTAMPTZ,            -- every article exposure, counted or not (article planner)
     PRIMARY KEY (user_id, meaning_id)
   );
 

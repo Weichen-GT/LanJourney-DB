@@ -35,12 +35,17 @@ INSERT INTO meaning (id, vocab_id, sense_key, definition) VALUES (1, 1, 'noun_po
 INSERT INTO user_meaning (user_id, meaning_id, status, source) VALUES
   ('00000000-0000-0000-0000-000000000001', 1, 0, 'ARTICLE'),
   ('00000000-0000-0000-0000-000000000001', 2, 6, 'ONBOARDING');
+INSERT INTO meaning_review (user_id, meaning_id, source, recognized, status_before, status_after, reviewed_at) VALUES
+  ('00000000-0000-0000-0000-000000000001', 1, 'ARTICLE',    true, 0, 0, '2026-09-01T08:00:00Z'),
+  ('00000000-0000-0000-0000-000000000001', 1, 'ARTICLE',    true, 0, 1, '2026-09-05T08:00:00Z'),
+  ('00000000-0000-0000-0000-000000000001', 1, 'QUICK_TEST', true, 1, 2, '2026-09-10T08:00:00Z');
 SQL
 
 echo "== old_db: migration (1st run)"; "${PSQL[@]}" -d old_db -f "$MIG"
 echo "== old_db: migration (2nd run)"; "${PSQL[@]}" -d old_db -f "$MIG" 2>/dev/null
 echo "== prod_db: migration";          "${PSQL[@]}" -d prod_db -f "$MIG"
-echo "== prod_db: sources after PART 1"; "${PSQL[@]}" -d prod_db -c "SELECT meaning_id, source FROM user_meaning ORDER BY 1"
+echo "== prod_db: rows after PART 1 (meaning 1: REWRITE, last seen 2026-09-05; meaning 2: no exposure)"
+"${PSQL[@]}" -d prod_db -c "SET TIME ZONE 'UTC'; SELECT meaning_id, source, last_seen_at FROM user_meaning ORDER BY 1"
 echo "== prod_db: PART 3, then migration again (must stay strict)"
 "${PSQL[@]}" -d prod_db -f "$WORK/part3.sql"
 "${PSQL[@]}" -d prod_db -f "$MIG" 2>/dev/null
