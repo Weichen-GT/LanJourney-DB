@@ -11,7 +11,7 @@ Everything about the LanJourney PostgreSQL database (Supabase in prod, Docker lo
 | `migrations/` | Hand-run changes for databases that already exist (there is no migration runner; the backend uses `ddl-auto=validate`). Already folded into `schema.sql`. |
 | `updates/` | In-place data fixes already applied to prod, kept as a record. |
 | `archive/` | Superseded SQL. |
-| `tools/` | `build_reset.py`, `gen_schema_doc.py` (below). |
+| `tools/` | `build_reset.py`, `gen_schema_doc.py` (below); `test_migration.sh` (tries a migration on throwaway databases: the `main` schema, a prod-like copy, and the current schema, plus re-runs). |
 
 ## Seed files (`seed/`)
 

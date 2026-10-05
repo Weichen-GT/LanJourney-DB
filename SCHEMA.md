@@ -229,7 +229,7 @@ user <-> meaning relation
 
 **Constraints**
 
-- `user_meaning_source_check` (check): `CHECK ((source = ANY (ARRAY['ONBOARDING'::text, 'ARTICLE'::text, 'QUIZ'::text, 'MANUAL'::text, 'UNKNOWN'::text])))`
+- `chk_user_meaning_source` (check): `CHECK ((source = ANY (ARRAY['ONBOARDING'::text, 'REWRITE'::text, 'GENERATED'::text, 'QUIZ'::text, 'MANUAL'::text, 'UNKNOWN'::text])))`
 - `user_meaning_status_check` (check): `CHECK (((status >= 0) AND (status <= 10)))`
 - `user_meaning_pkey` (primary key): `PRIMARY KEY (user_id, meaning_id)`
 

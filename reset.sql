@@ -201,7 +201,9 @@ CREATE TABLE
     meaning_id        BIGINT NOT NULL REFERENCES meaning  (id) ON DELETE CASCADE,
     status            INT    NOT NULL DEFAULT 0 CHECK (status BETWEEN 0 AND 10),
     -- How the row was CREATED; written once, never updated (status changes live in meaning_review).
-    source            TEXT   NOT NULL CHECK (source IN ('ONBOARDING', 'ARTICLE', 'QUIZ', 'MANUAL', 'UNKNOWN')),
+    -- REWRITE = taught by a pasted article's rewrite, GENERATED = by a generated article.
+    source            TEXT   NOT NULL CONSTRAINT chk_user_meaning_source
+                        CHECK (source IN ('ONBOARDING', 'REWRITE', 'GENERATED', 'QUIZ', 'MANUAL', 'UNKNOWN')),
     -- The article that taught this meaning; NULL for other sources. Written once, like source.
     source_article_id UUID   REFERENCES article (id) ON DELETE SET NULL,
     first_seen_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
