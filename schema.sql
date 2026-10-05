@@ -219,6 +219,24 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_article_meaning_meaning_id ON article_meaning (meaning_id);
 
 -- =========================
+-- 8b) article_topic: what an article is about (labels and a one-line gist only, never the text).
+--     Learning meanings are grouped by the topic of the article that taught them.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS article_topic (
+    article_id    UUID PRIMARY KEY REFERENCES article (id) ON DELETE CASCADE,
+    -- the closed topic list (ParentTopic in the backend), in its default priority order
+    parent_topic  TEXT NOT NULL CHECK (parent_topic IN (
+                    'DAILY_LIFE', 'FOOD', 'SHOPPING_SERVICES', 'TRAVEL', 'HEALTH', 'SOCIAL_LIFE',
+                    'WORK', 'JOB_SEARCH', 'EDUCATION', 'ENTERTAINMENT', 'SPORTS_HOBBIES',
+                    'TECHNOLOGY', 'MONEY', 'LIVING_ABROAD', 'NATURE')),
+    interest_area TEXT NOT NULL,             -- the reader's interest it shows, e.g. "computer science"
+    sub_area      TEXT,                      -- narrower, e.g. "machine learning"; NULL if general
+    gist          TEXT NOT NULL,             -- one sentence: what the article is about
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+-- =========================
 -- 9) vocab_level: vocabulary-size tiers (1-10, each split into IV/III/II/I sub-tiers)
 -- =========================
 CREATE TABLE

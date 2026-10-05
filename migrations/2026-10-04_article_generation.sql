@@ -78,6 +78,25 @@ UPDATE user_meaning um
    AND um.meaning_id = seen.meaning_id
    AND um.last_seen_at IS NULL;
 
+-- -------------------------------------------------------------------------
+-- A5: article_topic -- each article's topic labels and one-line gist (never
+-- the pasted text). Written in the background after a paste; no backfill.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS article_topic (
+  article_id    UUID PRIMARY KEY REFERENCES article (id) ON DELETE CASCADE,
+  parent_topic  TEXT NOT NULL CHECK (parent_topic IN (
+                  'DAILY_LIFE', 'FOOD', 'SHOPPING_SERVICES', 'TRAVEL', 'HEALTH', 'SOCIAL_LIFE',
+                  'WORK', 'JOB_SEARCH', 'EDUCATION', 'ENTERTAINMENT', 'SPORTS_HOBBIES',
+                  'TECHNOLOGY', 'MONEY', 'LIVING_ABROAD', 'NATURE')),
+  interest_area TEXT NOT NULL,
+  sub_area      TEXT,
+  gist          TEXT NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Every new table: block Supabase's public REST access (the backend bypasses RLS).
+ALTER TABLE article_topic ENABLE ROW LEVEL SECURITY;
+
 COMMIT;
 
 
@@ -133,6 +152,23 @@ SELECT check_name, ok FROM (
                         AND EXISTS (SELECT 1 FROM meaning_review r
                                      WHERE r.user_id = um.user_id AND r.meaning_id = um.meaning_id
                                        AND r.source = 'ARTICLE'))
+  -- A5
+  UNION ALL
+  SELECT 'A5 article_topic table exists with its columns',
+         (SELECT COUNT(*) = 6 FROM information_schema.columns
+           WHERE table_name = 'article_topic'
+             AND column_name IN ('article_id', 'parent_topic', 'interest_area', 'sub_area',
+                                 'gist', 'created_at'))
+  UNION ALL
+  SELECT 'A5 article_topic is deleted with its article',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'article_topic'::regclass AND contype = 'f'
+                    AND confrelid = 'article'::regclass AND confdeltype = 'c')
+  -- every table, including new ones
+  UNION ALL
+  SELECT 'Row Level Security is on for every table',
+         NOT EXISTS (SELECT 1 FROM pg_tables
+                      WHERE schemaname = 'public' AND NOT rowsecurity)
   -- after PART 3
   UNION ALL
   SELECT 'P4 (true only after PART 3) CHECK no longer allows ARTICLE',
