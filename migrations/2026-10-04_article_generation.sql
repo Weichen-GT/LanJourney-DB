@@ -97,6 +97,26 @@ CREATE TABLE IF NOT EXISTS article_topic (
 -- Every new table: block Supabase's public REST access (the backend bypasses RLS).
 ALTER TABLE article_topic ENABLE ROW LEVEL SECURITY;
 
+-- -------------------------------------------------------------------------
+-- C7a: user_vocab_level was never written (the onboarding quiz computed the
+-- estimate and dropped it). The new backend stores it at onboarding. For
+-- readers who already onboarded, rebuild it from their seeded words: the quiz
+-- seeds every word ranked up to 0.6 x the estimate, so estimate = highest
+-- seeded rank / 0.6. Readers who already have a row are left alone.
+-- -------------------------------------------------------------------------
+INSERT INTO user_vocab_level (user_id, level_id, estimated_vocabulary)
+SELECT seeded.user_id, l.id, seeded.estimate
+  FROM (SELECT um.user_id, ROUND(MAX(v.frequency_rank) / 0.6)::int AS estimate
+          FROM user_meaning um
+          JOIN meaning m ON m.id = um.meaning_id
+          JOIN vocabulary v ON v.id = m.vocab_id
+         WHERE um.source = 'ONBOARDING' AND v.frequency_rank IS NOT NULL
+         GROUP BY um.user_id) seeded
+  JOIN vocab_level l
+    ON l.min_words <= seeded.estimate
+   AND (l.max_words IS NULL OR l.max_words > seeded.estimate)
+ON CONFLICT (user_id) DO NOTHING;
+
 COMMIT;
 
 
@@ -164,6 +184,13 @@ SELECT check_name, ok FROM (
          EXISTS (SELECT 1 FROM pg_constraint
                   WHERE conrelid = 'article_topic'::regclass AND contype = 'f'
                     AND confrelid = 'article'::regclass AND confdeltype = 'c')
+  -- C7a
+  UNION ALL
+  SELECT 'C7a every reader with onboarding-seeded words has a vocabulary estimate',
+         NOT EXISTS (SELECT 1 FROM user_meaning um
+                      WHERE um.source = 'ONBOARDING'
+                        AND NOT EXISTS (SELECT 1 FROM user_vocab_level uvl
+                                         WHERE uvl.user_id = um.user_id))
   -- every table, including new ones
   UNION ALL
   SELECT 'Row Level Security is on for every table',

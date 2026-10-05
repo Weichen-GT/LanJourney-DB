@@ -30,7 +30,7 @@ ALTER TABLE user_meaning RENAME CONSTRAINT user_meaning_source_check TO chk_user
 ALTER TABLE user_meaning ALTER COLUMN source SET DEFAULT 'ARTICLE';
 INSERT INTO app_user (id, email, auth_provider, auth_provider_user_id)
   VALUES ('00000000-0000-0000-0000-000000000001', 't@example.com', 'local', 't@example.com');
-INSERT INTO vocabulary (id, term) VALUES (1, 'harbor'), (2, 'zebra');
+INSERT INTO vocabulary (id, term, frequency_rank) VALUES (1, 'harbor', 2400), (2, 'zebra', 1200);
 INSERT INTO meaning (id, vocab_id, sense_key, definition) VALUES (1, 1, 'noun_port', 'a port'), (2, 2, 'noun_animal', 'an animal');
 INSERT INTO user_meaning (user_id, meaning_id, status, source) VALUES
   ('00000000-0000-0000-0000-000000000001', 1, 0, 'ARTICLE'),
@@ -46,6 +46,8 @@ echo "== old_db: migration (2nd run)"; "${PSQL[@]}" -d old_db -f "$MIG" 2>/dev/n
 echo "== prod_db: migration";          "${PSQL[@]}" -d prod_db -f "$MIG"
 echo "== prod_db: rows after PART 1 (meaning 1: REWRITE, last seen 2026-09-05; meaning 2: no exposure)"
 "${PSQL[@]}" -d prod_db -c "SET TIME ZONE 'UTC'; SELECT meaning_id, source, last_seen_at FROM user_meaning ORDER BY 1"
+echo "== prod_db: vocabulary estimate rebuilt from the seeded words (zebra, rank 1200 -> 2000, Bronze IV)"
+"${PSQL[@]}" -d prod_db -c "SELECT uvl.estimated_vocabulary, l.name FROM user_vocab_level uvl JOIN vocab_level l ON l.id = uvl.level_id"
 echo "== prod_db: PART 3, then migration again (must stay strict)"
 "${PSQL[@]}" -d prod_db -f "$WORK/part3.sql"
 "${PSQL[@]}" -d prod_db -f "$MIG" 2>/dev/null
