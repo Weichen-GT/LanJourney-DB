@@ -34,10 +34,13 @@ CREATE INDEX IF NOT EXISTS idx_user_meaning_source_article_id
 
 -- -------------------------------------------------------------------------
 -- P4: user_meaning.source 'ARTICLE' becomes 'REWRITE' (pasted article) and
--- 'GENERATED' (generated article). The CHECK still allows 'ARTICLE' until
--- PART 3, because the backend running now writes it until the new one is
--- deployed. The constraint was named chk_user_meaning_source by the
--- 2026-10-03 migration but user_meaning_source_check in databases built from
+-- 'GENERATED' (generated article). PART 1 only WIDENS the allowed values; it
+-- converts no rows, because the backend running today cannot read 'REWRITE'.
+-- The new backend reads a leftover 'ARTICLE' as REWRITE, and PART 3 (after
+-- the new backend is live) converts the rows and drops 'ARTICLE'. So PART 1 is
+-- safe to run any time before the deploy.
+-- The constraint was named chk_user_meaning_source by the 2026-10-03
+-- migration but user_meaning_source_check in databases built from
 -- schema.sql, so both names are dropped. Skipped when already done, so a
 -- re-run never loosens the final constraint from PART 3.
 -- -------------------------------------------------------------------------
@@ -54,8 +57,6 @@ BEGIN
   ALTER TABLE user_meaning ADD CONSTRAINT chk_user_meaning_source
     CHECK (source IN ('ONBOARDING', 'ARTICLE', 'REWRITE', 'GENERATED', 'QUIZ', 'MANUAL', 'UNKNOWN'));
 END $$;
-
-UPDATE user_meaning SET source = 'REWRITE' WHERE source = 'ARTICLE';
 
 -- A leftover default from the 2026-10-03 migration would write the retired 'ARTICLE'.
 ALTER TABLE user_meaning ALTER COLUMN source DROP DEFAULT;
@@ -121,7 +122,8 @@ COMMIT;
 
 
 -- =========================================================================
--- PART 2: verify (read-only). Every row must show ok = true.
+-- PART 2: verify (read-only). Every row must show ok = true, except rows
+-- marked "(true only after PART 3)" before PART 3 has run.
 -- =========================================================================
 SELECT check_name, ok FROM (
   -- P3
@@ -152,9 +154,6 @@ SELECT check_name, ok FROM (
          NOT EXISTS (SELECT 1 FROM pg_constraint
                       WHERE conrelid = 'user_meaning'::regclass
                         AND conname = 'user_meaning_source_check')
-  UNION ALL
-  SELECT 'P4 no user_meaning rows left with source ARTICLE',
-         NOT EXISTS (SELECT 1 FROM user_meaning WHERE source = 'ARTICLE')
   UNION ALL
   SELECT 'P4 source has no default',
          (SELECT column_default IS NULL FROM information_schema.columns
@@ -198,6 +197,9 @@ SELECT check_name, ok FROM (
                       WHERE schemaname = 'public' AND NOT rowsecurity)
   -- after PART 3
   UNION ALL
+  SELECT 'P4 (true only after PART 3) no user_meaning rows left with source ARTICLE',
+         NOT EXISTS (SELECT 1 FROM user_meaning WHERE source = 'ARTICLE')
+  UNION ALL
   SELECT 'P4 (true only after PART 3) CHECK no longer allows ARTICLE',
          NOT EXISTS (SELECT 1 FROM pg_constraint
                       WHERE conrelid = 'user_meaning'::regclass
@@ -209,9 +211,10 @@ SELECT check_name, ok FROM (
 -- =========================================================================
 -- PART 3: later steps (commented out on purpose)
 -- =========================================================================
--- P4 final step. Run RIGHT AFTER the article-generation backend is live (the
--- old backend writes 'ARTICLE'; the new one cannot read that value, so rows the
--- old one wrote between PART 1 and the deploy must be converted promptly).
+-- P4 final step. Run AFTER the article-generation backend is live on this
+-- database (soon after; nothing breaks while you wait). Not before: the old
+-- backend cannot read 'REWRITE'. After this, rolling the backend back to a
+-- version without REWRITE would break reading these rows.
 --
 -- BEGIN;
 -- UPDATE user_meaning SET source = 'REWRITE' WHERE source = 'ARTICLE';

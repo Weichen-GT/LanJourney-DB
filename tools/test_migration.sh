@@ -44,13 +44,15 @@ SQL
 echo "== old_db: migration (1st run)"; "${PSQL[@]}" -d old_db -f "$MIG"
 echo "== old_db: migration (2nd run)"; "${PSQL[@]}" -d old_db -f "$MIG" 2>/dev/null
 echo "== prod_db: migration";          "${PSQL[@]}" -d prod_db -f "$MIG"
-echo "== prod_db: rows after PART 1 (meaning 1: REWRITE, last seen 2026-09-05; meaning 2: no exposure)"
+echo "== prod_db: rows after PART 1 (meaning 1 still ARTICLE: the running backend must keep reading it; last seen 2026-09-05; meaning 2: no exposure)"
 "${PSQL[@]}" -d prod_db -c "SET TIME ZONE 'UTC'; SELECT meaning_id, source, last_seen_at FROM user_meaning ORDER BY 1"
 echo "== prod_db: vocabulary estimate rebuilt from the seeded words (zebra, rank 1200 -> 2000, Bronze IV)"
 "${PSQL[@]}" -d prod_db -c "SELECT uvl.estimated_vocabulary, l.name FROM user_vocab_level uvl JOIN vocab_level l ON l.id = uvl.level_id"
 echo "== prod_db: PART 3, then migration again (must stay strict)"
 "${PSQL[@]}" -d prod_db -f "$WORK/part3.sql"
 "${PSQL[@]}" -d prod_db -f "$MIG" 2>/dev/null
+echo "== prod_db: rows after PART 3 (meaning 1 now REWRITE)"
+"${PSQL[@]}" -d prod_db -c "SELECT meaning_id, source FROM user_meaning ORDER BY 1"
 echo "== prod_db: an ARTICLE insert must now fail"
 if "${PSQL[@]}" -d prod_db -c "INSERT INTO user_meaning (user_id, meaning_id, status, source) VALUES ('00000000-0000-0000-0000-000000000001', 2, 0, 'ARTICLE')" 2>/dev/null; then echo "FAIL: ARTICLE accepted"; else echo "ok: ARTICLE rejected"; fi
 echo "== new_db: migration on the fresh branch schema"; "${PSQL[@]}" -d new_db -f "$MIG" 2>/dev/null
