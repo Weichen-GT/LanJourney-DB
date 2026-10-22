@@ -118,6 +118,17 @@ SELECT seeded.user_id, l.id, seeded.estimate
    AND (l.max_words IS NULL OR l.max_words > seeded.estimate)
 ON CONFLICT (user_id) DO NOTHING;
 
+-- -------------------------------------------------------------------------
+-- C11: vocabulary expansion -- DATA ONLY, no schema change, so nothing to run in
+-- this PART. The extra common words (go, limit, injury, ...) with their
+-- meanings come from two generated seed files; run them after PART 1, in this
+-- order (see docs/article-generation-ops-guide.md, Step A2):
+--   1. seed/04_vocabulary_expansion.sql   inserts only; ON CONFLICT DO NOTHING
+--   2. seed/03_frequency_rank.sql         re-ranks every word 1..N (dense)
+-- Deploy the backend whose onboarding_quiz_v3.json carries the matching ranks
+-- together with (or after) step 2, never before it.
+-- -------------------------------------------------------------------------
+
 COMMIT;
 
 
@@ -190,6 +201,33 @@ SELECT check_name, ok FROM (
                       WHERE um.source = 'ONBOARDING'
                         AND NOT EXISTS (SELECT 1 FROM user_vocab_level uvl
                                          WHERE uvl.user_id = um.user_id))
+  -- C11 (rows 1-3 hold before and after the seeds; the others only after both seeds ran)
+  UNION ALL
+  SELECT 'C11 every ranked word has at least one meaning',
+         NOT EXISTS (SELECT 1 FROM vocabulary v
+                      WHERE v.frequency_rank IS NOT NULL
+                        AND NOT EXISTS (SELECT 1 FROM meaning m WHERE m.vocab_id = v.id))
+  UNION ALL
+  SELECT 'C11 frequency_rank is dense: 1..N with no gap and no duplicate',
+         (SELECT COALESCE(COUNT(frequency_rank) = MAX(frequency_rank)
+                          AND COUNT(frequency_rank) = COUNT(DISTINCT frequency_rank), TRUE)
+            FROM vocabulary)
+  UNION ALL
+  SELECT 'C11 no profane word has a rank',
+         NOT EXISTS (SELECT 1 FROM vocabulary
+                      WHERE frequency_rank IS NOT NULL
+                        AND LOWER(term) IN ('shit', 'fuck', 'fucking', 'bitch', 'cunt', 'pussy',
+                                            'dick', 'cock', 'porn', 'asshole', 'bastard', 'slut',
+                                            'whore', 'penis', 'vagina'))
+  UNION ALL
+  SELECT 'C11 (true only after the C11 seeds) go, limit, injury and hunt are ranked with meanings',
+         (SELECT COUNT(*) = 4 FROM vocabulary v
+           WHERE LOWER(v.term) IN ('go', 'limit', 'injury', 'hunt') AND v.frequency_rank IS NOT NULL
+             AND EXISTS (SELECT 1 FROM meaning m WHERE m.vocab_id = v.id
+                                                    AND m.wordnet_sense_id IS NOT NULL))
+  UNION ALL
+  SELECT 'C11 (true only after the C11 seeds) at least 10,900 ranked words',
+         (SELECT COUNT(frequency_rank) >= 10900 FROM vocabulary)
   -- every table, including new ones
   UNION ALL
   SELECT 'Row Level Security is on for every table',
