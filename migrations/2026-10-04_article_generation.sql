@@ -123,8 +123,8 @@ ON CONFLICT (user_id) DO NOTHING;
 -- this PART. The extra common words (go, limit, injury, ...) with their
 -- meanings come from two generated seed files; run them after PART 1, in this
 -- order (see docs/article-generation-ops-guide.md, Step A2):
---   1. seed/04_vocabulary_expansion.sql   inserts only; ON CONFLICT DO NOTHING
---   2. seed/03_frequency_rank.sql         re-ranks every word 1..N (dense)
+--   1. seed/03_vocabulary_expansion.sql   inserts only; ON CONFLICT DO NOTHING
+--   2. seed/04_frequency_rank.sql         re-ranks every word 1..N (dense)
 -- Deploy the backend whose onboarding_quiz_v3.json carries the matching ranks
 -- together with (or after) step 2, never before it.
 -- -------------------------------------------------------------------------

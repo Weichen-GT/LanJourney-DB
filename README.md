@@ -19,14 +19,15 @@ Everything about the LanJourney PostgreSQL database (Supabase in prod, Docker lo
 |---|---|
 | `01_vocabulary_original.sql` | The original 6,841 words and their meanings |
 | `02_vocabulary_wordnet.sql` | The 3,143 WordNet-sourced words and their meanings |
-| `03_frequency_rank.sql` | Sets `frequency_rank` for all ~10k words (must run last) |
+| `03_vocabulary_expansion.sql` | 1,083 more common words (go, limit, injury, ...) and 2,060 meanings; fills the empty columns of a word that already exists as a stub row, skips colliding meanings |
+| `04_frequency_rank.sql` | Sets `frequency_rank` for all ~11k words (must run last, after `03`) |
 
-Result: 9,984 words, 19,981 meanings. Each file is safe to re-run (`ON CONFLICT DO NOTHING`).
+Result: 11,067 ranked words, 22,041 meanings. Each file is safe to re-run.
 
 ## Rebuild a database from scratch
 
 Local Docker (from the LanJourney2.0 repo): `docker compose down -v && docker compose up -d` -- it loads
-`schema.sql` and the three seed files automatically, in order.
+`schema.sql` and the four seed files automatically, in order.
 
 Any other database (a staging project, a fresh local one), with `psql`:
 
@@ -34,7 +35,8 @@ Any other database (a staging project, a fresh local one), with `psql`:
 psql "$DATABASE_URL" -f reset.sql            # DELETES everything, recreates the empty schema
 psql "$DATABASE_URL" -f seed/01_vocabulary_original.sql
 psql "$DATABASE_URL" -f seed/02_vocabulary_wordnet.sql
-psql "$DATABASE_URL" -f seed/03_frequency_rank.sql
+psql "$DATABASE_URL" -f seed/03_vocabulary_expansion.sql
+psql "$DATABASE_URL" -f seed/04_frequency_rank.sql
 ```
 
 `reset.sql` can be pasted into the Supabase SQL editor too, but the seed files are too large for it; use `psql`.

@@ -27,7 +27,7 @@ header = f"""-- =============================================================
 -- !! Only run it on a database you are happy to wipe (local dev, or an empty/staging project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
---   seed/01_vocabulary_original.sql, seed/02_vocabulary_wordnet.sql, seed/03_frequency_rank.sql
+--   seed/01_vocabulary_original.sql, seed/02_vocabulary_wordnet.sql, seed/03_vocabulary_expansion.sql, seed/04_frequency_rank.sql
 -- Runs as one script in the Supabase SQL editor or psql (no BEGIN/COMMIT: the editor runs statements separately).
 -- =============================================================
 
