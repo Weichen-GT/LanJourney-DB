@@ -132,6 +132,53 @@ CREATE INDEX IF NOT EXISTS idx_ai_call_log_user ON ai_call_log (user_id, created
 ALTER TABLE ai_call_log ENABLE ROW LEVEL SECURITY;
 
 -- -------------------------------------------------------------------------
+-- B4: generated_article -- drafts written for a reader. An article row is created
+-- only when the reader completes one (D10). Unread text is deleted after 30 days
+-- (60 after the first open) by the backend's nightly job; the metadata row stays.
+-- ai_call_log.generated_article_id stays a plain column (no foreign key): calls
+-- are logged before the draft exists, and skipped articles have no row at all.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS generated_article (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id               UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  slot                  SMALLINT CHECK (slot IN (1, 2)),
+  source                TEXT CHECK (source IN ('P', 'R', 'C', 'X')),
+  pick_type             TEXT CHECK (pick_type IN ('EXPLOIT', 'DRILL_DOWN', 'EXPLORE')),
+  topic_label           TEXT,
+  scene                 TEXT NOT NULL,
+  plan                  JSONB NOT NULL,
+  validation_report     JSONB,
+  title                 TEXT,
+  teaser                TEXT,
+  content               TEXT,
+  word_count            INT NOT NULL,
+  read_minutes          INT NOT NULL,
+  quality               TEXT NOT NULL CHECK (quality IN ('PASSED', 'RELAXED')),
+  relaxation            TEXT CHECK (relaxation IN ('STRAY_ALLOWANCE', 'LEARNING_MINIMUM')),
+  prompt_version        TEXT NOT NULL,
+  model                 TEXT NOT NULL,
+  settings_version      TEXT NOT NULL,
+  status                TEXT NOT NULL DEFAULT 'GENERATED'
+                          CHECK (status IN ('GENERATED', 'DELIVERED', 'OPENED', 'COMPLETED', 'EXPIRED', 'HIDDEN')),
+  status_before_hidden  TEXT,
+  generated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  delivered_at          TIMESTAMPTZ,
+  first_opened_at       TIMESTAMPTZ,
+  completed_at          TIMESTAMPTZ,
+  expired_at            TIMESTAMPTZ,
+  hidden_at             TIMESTAMPTZ,
+  text_deleted_at       TIMESTAMPTZ,
+  feedback              TEXT,
+  not_interested_reason TEXT,
+  article_id            UUID REFERENCES article (id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_generated_article_user ON generated_article (user_id, generated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_generated_article_open
+  ON generated_article (status, generated_at)
+  WHERE status IN ('GENERATED', 'DELIVERED', 'OPENED');
+ALTER TABLE generated_article ENABLE ROW LEVEL SECURITY;
+
+-- -------------------------------------------------------------------------
 -- C7a: user_vocab_level was never written (the onboarding quiz computed the
 -- estimate and dropped it). The new backend stores it at onboarding. For
 -- readers who already onboarded, rebuild it from their seeded words: the quiz
@@ -242,6 +289,36 @@ SELECT check_name, ok FROM (
          (SELECT COUNT(*) = 2 FROM pg_indexes
            WHERE tablename = 'ai_call_log'
              AND indexname IN ('idx_ai_call_log_created_at', 'idx_ai_call_log_user'))
+  -- B4
+  UNION ALL
+  SELECT 'B4 generated_article table exists with its columns',
+         (SELECT COUNT(*) = 31 FROM information_schema.columns
+           WHERE table_name = 'generated_article')
+  UNION ALL
+  SELECT 'B4 generated_article is deleted with the reader (user_id ON DELETE CASCADE)',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'generated_article'::regclass AND contype = 'f'
+                    AND confrelid = 'app_user'::regclass AND confdeltype = 'c')
+  UNION ALL
+  SELECT 'B4 article_id keeps the article row on delete (ON DELETE SET NULL)',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'generated_article'::regclass AND contype = 'f'
+                    AND confrelid = 'article'::regclass AND confdeltype = 'n')
+  UNION ALL
+  SELECT 'B4 status CHECK allows the six states',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'generated_article'::regclass AND contype = 'c'
+                    AND pg_get_constraintdef(oid) LIKE '%GENERATED%'
+                    AND pg_get_constraintdef(oid) LIKE '%DELIVERED%'
+                    AND pg_get_constraintdef(oid) LIKE '%OPENED%'
+                    AND pg_get_constraintdef(oid) LIKE '%COMPLETED%'
+                    AND pg_get_constraintdef(oid) LIKE '%EXPIRED%'
+                    AND pg_get_constraintdef(oid) LIKE '%HIDDEN%')
+  UNION ALL
+  SELECT 'B4 generated_article indexes exist',
+         (SELECT COUNT(*) = 2 FROM pg_indexes
+           WHERE tablename = 'generated_article'
+             AND indexname IN ('idx_generated_article_user', 'idx_generated_article_open'))
   -- C7a
   UNION ALL
   SELECT 'C7a every reader with onboarding-seeded words has a vocabulary estimate',

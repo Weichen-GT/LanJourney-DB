@@ -2,7 +2,7 @@
 -- RESET: DELETES EVERYTHING, then rebuilds the empty schema.
 -- GENERATED from schema.sql by tools/build_reset.py -- do not edit by hand.
 --
--- !! This drops all 21 tables with all their data (users, articles, progress, vocabulary).
+-- !! This drops all 22 tables with all their data (users, articles, progress, vocabulary).
 -- !! Only run it on a database you are happy to wipe (local dev, or an empty scratch project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
@@ -10,6 +10,7 @@
 -- Runs as one script in the Supabase SQL editor or psql (no BEGIN/COMMIT: the editor runs statements separately).
 -- =============================================================
 
+DROP TABLE IF EXISTS generated_article CASCADE;
 DROP TABLE IF EXISTS ai_call_log CASCADE;
 DROP TABLE IF EXISTS conversation_target CASCADE;
 DROP TABLE IF EXISTS conversation_message CASCADE;
@@ -560,6 +561,55 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_ai_call_log_created_at ON ai_call_log (created_at);
 -- a reader's calls (account view, per-reader cost)
 CREATE INDEX IF NOT EXISTS idx_ai_call_log_user ON ai_call_log (user_id, created_at DESC);
+
+-- =========================
+-- 19) generated_article: an article written for a reader (design doc B4). Drafts live here; an
+--     article row is created only when the reader completes it, so unread drafts never touch
+--     article / user_article / the vocabulary. After 30 days unread (60 days after the first open)
+--     the text is deleted and the small metadata row stays.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS generated_article (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),   -- chosen before generation, so the AI call log can name it
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    slot SMALLINT CHECK (slot IN (1, 2)),            -- set by the planner (B8): 1 = profile, 2 = pasted topics
+    source TEXT CHECK (source IN ('P', 'R', 'C', 'X')),  -- what the topic came from (profile, recent paste, completed, explore)
+    pick_type TEXT CHECK (pick_type IN ('EXPLOIT', 'DRILL_DOWN', 'EXPLORE')),
+    topic_label TEXT,                                -- the parent topic
+    scene TEXT NOT NULL,
+    plan JSONB NOT NULL,                             -- scene, counts, the NEW and LEARNING pools, the must-use word
+    validation_report JSONB,                         -- targets found, strays, repairs, cost of the final text
+    title TEXT,                                      -- title, teaser and content: NULL once the text is deleted
+    teaser TEXT,
+    content TEXT,
+    word_count INT NOT NULL,
+    read_minutes INT NOT NULL,
+    quality TEXT NOT NULL CHECK (quality IN ('PASSED', 'RELAXED')),  -- how the vocabulary check ended
+    relaxation TEXT CHECK (relaxation IN ('STRAY_ALLOWANCE', 'LEARNING_MINIMUM')),
+    prompt_version TEXT NOT NULL,
+    model TEXT NOT NULL,
+    settings_version TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'GENERATED'
+      CHECK (status IN ('GENERATED', 'DELIVERED', 'OPENED', 'COMPLETED', 'EXPIRED', 'HIDDEN')),
+    status_before_hidden TEXT,                       -- where "undo" returns to
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    delivered_at TIMESTAMPTZ,
+    first_opened_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    expired_at TIMESTAMPTZ,
+    hidden_at TIMESTAMPTZ,
+    text_deleted_at TIMESTAMPTZ,
+    feedback TEXT,
+    not_interested_reason TEXT,
+    article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- set on Complete (D10)
+  );
+
+-- the reader's feed: newest first, by state
+CREATE INDEX IF NOT EXISTS idx_generated_article_user ON generated_article (user_id, generated_at DESC);
+-- the nightly expiry job reads only the open states
+CREATE INDEX IF NOT EXISTS idx_generated_article_open
+  ON generated_article (status, generated_at)
+  WHERE status IN ('GENERATED', 'DELIVERED', 'OPENED');
 
 -- =========================
 -- Row Level Security
