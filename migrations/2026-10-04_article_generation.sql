@@ -2,7 +2,7 @@
 -- Daily article generation: every database change for the feature, in one file.
 -- Design: LanJourney2.0/docs/daily-article-generation.md. Each section names its ticket.
 --
--- No migration runner (ddl-auto=validate): run by hand, STAGE first, then PROD,
+-- No migration runner (ddl-auto=validate): run by hand on PROD (no staging since 2026-10-23),
 -- BEFORE deploying the backend from the article-generation branch (the backend
 -- fails to start if a column it expects is missing). Every statement is safe to
 -- re-run, so running the whole file again after new sections are added is fine.

@@ -3,7 +3,7 @@
 -- Design: LanJourney2.0/docs/conversation-quiz-design.md; build plan:
 -- LanJourney2.0/docs/conversation-quiz-implementation.md (ticket CQ1, section 3).
 --
--- No migration runner (ddl-auto=validate): run by hand, STAGE first, then PROD,
+-- No migration runner (ddl-auto=validate): run by hand on PROD (no staging since 2026-10-23),
 -- BEFORE deploying the backend from the conversation-quiz branch (the backend
 -- fails to start if a table, column or constraint it expects is missing). Every
 -- statement is safe to re-run, so running the whole file twice is fine.

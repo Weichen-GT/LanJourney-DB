@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Throwaway local Postgres for the article-generation spike (needs the PostgreSQL binaries; Git Bash
 # on Windows). It holds the real vocabulary (schema.sql + seed/) and nothing else: the spike creates
-# its synthetic readers in it and never touches stage or prod.
+# its synthetic readers in it and never touches prod.
 #
 #   tools/spike_db.sh start   create the cluster on first use, load schema + seeds, start it
 #   tools/spike_db.sh stop    stop it (data stays)

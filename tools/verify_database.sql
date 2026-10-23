@@ -1,5 +1,5 @@
 -- =========================================================================
--- verify_database.sql: read-only health check of any LanJourney database (stage, prod, local).
+-- verify_database.sql: read-only health check of any LanJourney database (prod, local).
 -- Changes nothing. Run it in the Supabase SQL editor, or:
 --   psql "<connection>" -f tools/verify_database.sql
 --

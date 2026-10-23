@@ -3,7 +3,7 @@
 -- GENERATED from schema.sql by tools/build_reset.py -- do not edit by hand.
 --
 -- !! This drops all 20 tables with all their data (users, articles, progress, vocabulary).
--- !! Only run it on a database you are happy to wipe (local dev, or an empty/staging project).
+-- !! Only run it on a database you are happy to wipe (local dev, or an empty scratch project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
 --   seed/01_vocabulary_original.sql, seed/02_vocabulary_wordnet.sql, seed/03_vocabulary_expansion.sql, seed/04_frequency_rank.sql
