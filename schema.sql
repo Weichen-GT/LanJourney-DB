@@ -365,17 +365,20 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_daily_quiz_question_quiz_id ON daily_quiz_question (quiz_id);
 
 -- =========================
--- 13) quiz_session: one practice session (Quick Test)
+-- 13) quiz_session: one practice session (Quick Test or Conversation)
 -- =========================
 CREATE TABLE
   IF NOT EXISTS quiz_session (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
-    -- only Quick Tests today; room for other practice types later
-    mode TEXT NOT NULL CHECK (mode IN ('QUICK')),
-    status TEXT NOT NULL DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS', 'COMPLETED')),
+    mode TEXT NOT NULL CHECK (mode IN ('QUICK', 'CONVERSATION')),
+    -- ABANDONED: a Conversation closed before the user sent any message (not counted anywhere)
+    status TEXT NOT NULL DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'ABANDONED')),
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMPTZ
+    completed_at TIMESTAMPTZ,
+    title TEXT,                      -- Conversation only: the scenario's title
+    scenario TEXT,                   -- Conversation only: the 1-2 sentence setup shown to the user
+    source_article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- Conversation only: the article its words came from
   );
 
 CREATE INDEX IF NOT EXISTS idx_quiz_session_user_started ON quiz_session (user_id, started_at DESC);
@@ -413,7 +416,7 @@ CREATE TABLE
     user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
     meaning_id BIGINT NOT NULL REFERENCES meaning (id) ON DELETE CASCADE,
     source TEXT NOT NULL CHECK (
-      source IN ('ARTICLE', 'QUICK_TEST', 'ARTICLE_REVIEW', 'DAILY_QUIZ', 'REVIEW', 'MANUAL')
+      source IN ('ARTICLE', 'QUICK_TEST', 'ARTICLE_REVIEW', 'DAILY_QUIZ', 'REVIEW', 'MANUAL', 'CONVERSATION')
     ),
     recognized BOOLEAN,              -- NULL for MANUAL changes (not a test of the user)
     status_before INT NOT NULL,
@@ -424,6 +427,59 @@ CREATE TABLE
 
 CREATE INDEX IF NOT EXISTS idx_meaning_review_user_meaning
   ON meaning_review (user_id, meaning_id, reviewed_at);
+
+-- =========================
+-- 16) conversation_message: every message of a Conversation. The text (and the grader's answer,
+--     which quotes it) is set to NULL after 30 days; the verdict and scores stay for analysis.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS conversation_message (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES quiz_session (id) ON DELETE CASCADE,
+    turn INT NOT NULL,               -- 1, 2, 3 ... both roles, in order
+    role TEXT NOT NULL CHECK (role IN ('USER', 'AI')),
+    text TEXT,                       -- NULL after the retention period
+    target_meaning_id BIGINT REFERENCES meaning (id) ON DELETE SET NULL,  -- the active target when a USER message was sent
+    verdict TEXT CHECK (verdict IN ('NOT_USED', 'WRONG_SENSE', 'THIN', 'ALMOST', 'PASS')),  -- USER messages: kept for analysis
+    score INT,                       -- USER messages: 0-100, from the four parts below
+    use_score SMALLINT,              -- the grader's four parts, each 0-2
+    sense_score SMALLINT,
+    form_score SMALLINT,
+    context_score SMALLINT,
+    partner_action TEXT CHECK (partner_action IN ('IMPROVE', 'RE_ASK_NAME_IT', 'RE_ASK_REPHRASE', 'REVEAL_WORD', 'REDIRECT_WRONG_SENSE', 'NEXT_TARGET', 'STEER_BACK', 'WRAP_UP')),  -- USER messages: what the partner does next (decided when the message is graded)
+    improve_angle TEXT,              -- USER messages: CAUSE, EXAMPLE or CONSEQUENCE, for an IMPROVE action
+    grader_json TEXT,                -- the grader's full answer (quotes the user); NULL after the retention period
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (session_id, turn)
+  );
+
+-- =========================
+-- 17) conversation_target: one word meaning tested in a Conversation, and how it went
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS conversation_target (
+    session_id UUID NOT NULL REFERENCES quiz_session (id) ON DELETE CASCADE,
+    meaning_id BIGINT NOT NULL REFERENCES meaning (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,  -- repeated from the session so the fail-gap query is one index
+    position INT NOT NULL,           -- order in the conversation, 1-3
+    guiding_question TEXT,           -- the prepared questions from the scenario (no user text)
+    re_ask TEXT,
+    state TEXT NOT NULL DEFAULT 'PENDING' CHECK (state IN ('PENDING', 'ACTIVE', 'PASS', 'FAIL', 'NOT_ATTEMPTED')),
+    messages_used INT NOT NULL DEFAULT 0,        -- user messages while this was the active target (at most 3)
+    word_used BOOLEAN NOT NULL DEFAULT FALSE,    -- the user has used the word, so it is no longer hidden
+    word_revealed BOOLEAN NOT NULL DEFAULT FALSE,  -- the word was shown in the sidebar (message 3)
+    path TEXT CHECK (path IN ('A', 'B', 'C')),   -- set on PASS: the message the word was first used on (C = shown to the user)
+    best_score INT,                  -- the highest score among its replies
+    best_message_id UUID REFERENCES conversation_message (id) ON DELETE SET NULL,  -- that reply: the one explained in the summary
+    status_before INT,               -- on PASS: the meaning's status before and after the gate was crossed
+    status_after INT,
+    finished_at TIMESTAMPTZ,
+    PRIMARY KEY (session_id, meaning_id)
+  );
+
+-- the fail-gap query: this user's recent conversations about this meaning
+CREATE INDEX IF NOT EXISTS idx_conversation_target_user_meaning
+  ON conversation_target (user_id, meaning_id, finished_at DESC);
 
 -- =========================
 -- Row Level Security
