@@ -21,6 +21,8 @@ SELECT item, ok FROM (
   UNION ALL SELECT 'column user_meaning.last_seen_at (P9)',
          EXISTS (SELECT 1 FROM information_schema.columns
                   WHERE table_name = 'user_meaning' AND column_name = 'last_seen_at')
+  UNION ALL SELECT 'table ai_call_log (D9)',
+         EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_call_log')
   UNION ALL SELECT 'table article_topic (A5)',
          EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'article_topic')
   UNION ALL SELECT 'source CHECK allows REWRITE and GENERATED (P4)',

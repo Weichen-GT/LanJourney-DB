@@ -99,6 +99,39 @@ CREATE TABLE IF NOT EXISTS article_topic (
 ALTER TABLE article_topic ENABLE ROW LEVEL SECURITY;
 
 -- -------------------------------------------------------------------------
+-- D9: ai_call_log -- one row per AI call of article generation (numbers kept; the
+-- request/response text is removed after ~30 days by the backend's nightly job).
+-- generated_article_id gets its foreign key when generated_article exists (B4).
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ai_call_log (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id              UUID REFERENCES app_user (id) ON DELETE CASCADE,
+  generated_article_id UUID,
+  purpose              TEXT NOT NULL CHECK (purpose IN (
+                         'GENERATE', 'REGENERATE', 'SENSE_CONFIRM', 'SENTENCE_REPAIR', 'JUDGE',
+                         'SAFETY', 'INTEREST_LABEL', 'SUBAREA_PROPOSAL', 'PROFILE_EXTRACTION',
+                         'REWRITE_SELECT')),
+  attempt              INT NOT NULL DEFAULT 1,
+  model                TEXT NOT NULL,
+  prompt_version       TEXT,
+  settings_version     TEXT,
+  request_text         TEXT,
+  response_text        TEXT,
+  input_tokens         INT NOT NULL DEFAULT 0,
+  output_tokens        INT NOT NULL DEFAULT 0,
+  reasoning_tokens     INT NOT NULL DEFAULT 0,
+  cost_usd             NUMERIC(12, 6),
+  latency_ms           BIGINT,
+  status               TEXT NOT NULL CHECK (status IN ('OK', 'ERROR', 'RETRY', 'SCHEMA_FAIL')),
+  error                TEXT,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  text_purged_at       TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_ai_call_log_created_at ON ai_call_log (created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_call_log_user ON ai_call_log (user_id, created_at DESC);
+ALTER TABLE ai_call_log ENABLE ROW LEVEL SECURITY;
+
+-- -------------------------------------------------------------------------
 -- C7a: user_vocab_level was never written (the onboarding quiz computed the
 -- estimate and dropped it). The new backend stores it at onboarding. For
 -- readers who already onboarded, rebuild it from their seeded words: the quiz
@@ -194,6 +227,21 @@ SELECT check_name, ok FROM (
          EXISTS (SELECT 1 FROM pg_constraint
                   WHERE conrelid = 'article_topic'::regclass AND contype = 'f'
                     AND confrelid = 'article'::regclass AND confdeltype = 'c')
+  -- D9
+  UNION ALL
+  SELECT 'D9 ai_call_log table exists with its columns',
+         (SELECT COUNT(*) = 19 FROM information_schema.columns
+           WHERE table_name = 'ai_call_log')
+  UNION ALL
+  SELECT 'D9 ai_call_log is deleted with the reader (user_id ON DELETE CASCADE)',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'ai_call_log'::regclass AND contype = 'f'
+                    AND confrelid = 'app_user'::regclass AND confdeltype = 'c')
+  UNION ALL
+  SELECT 'D9 ai_call_log indexes exist',
+         (SELECT COUNT(*) = 2 FROM pg_indexes
+           WHERE tablename = 'ai_call_log'
+             AND indexname IN ('idx_ai_call_log_created_at', 'idx_ai_call_log_user'))
   -- C7a
   UNION ALL
   SELECT 'C7a every reader with onboarding-seeded words has a vocabulary estimate',

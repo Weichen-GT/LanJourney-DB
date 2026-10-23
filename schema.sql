@@ -488,6 +488,41 @@ CREATE INDEX IF NOT EXISTS idx_conversation_target_user_meaning
   ON conversation_target (user_id, meaning_id, finished_at DESC);
 
 -- =========================
+-- 18) ai_call_log: one row per AI call of article generation (D9). The numbers are kept; the request and
+--     response text is set to NULL after about 30 days. A call whose prompt holds a reader's pasted
+--     article (or profile text) is logged with no text at all.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS ai_call_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES app_user (id) ON DELETE CASCADE,  -- deleted with the reader's account
+    generated_article_id UUID,       -- the draft this call served; the key to generated_article is added with that table (B4)
+    purpose TEXT NOT NULL CHECK (purpose IN ('GENERATE', 'REGENERATE', 'SENSE_CONFIRM', 'SENTENCE_REPAIR', 'JUDGE',
+                                             'SAFETY', 'INTEREST_LABEL', 'SUBAREA_PROPOSAL', 'PROFILE_EXTRACTION',
+                                             'REWRITE_SELECT')),
+    attempt INT NOT NULL DEFAULT 1,  -- the try within one request (1 = first)
+    model TEXT NOT NULL,
+    prompt_version TEXT,             -- e.g. gen-v2
+    settings_version TEXT,           -- the GenerationSettings fingerprint
+    request_text TEXT,               -- system + user prompt; NULL after the retention period or when never kept
+    response_text TEXT,              -- the model's answer; NULL after the retention period or when never kept
+    input_tokens INT NOT NULL DEFAULT 0,
+    output_tokens INT NOT NULL DEFAULT 0,
+    reasoning_tokens INT NOT NULL DEFAULT 0,  -- hidden reasoning, already counted in output_tokens
+    cost_usd NUMERIC(12, 6),         -- NULL when the model has no configured price
+    latency_ms BIGINT,
+    status TEXT NOT NULL CHECK (status IN ('OK', 'ERROR', 'RETRY', 'SCHEMA_FAIL')),
+    error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    text_purged_at TIMESTAMPTZ       -- when the text was removed
+  );
+
+-- the nightly text purge and the dashboard's time ranges
+CREATE INDEX IF NOT EXISTS idx_ai_call_log_created_at ON ai_call_log (created_at);
+-- a reader's calls (account view, per-reader cost)
+CREATE INDEX IF NOT EXISTS idx_ai_call_log_user ON ai_call_log (user_id, created_at DESC);
+
+-- =========================
 -- Row Level Security
 -- =========================
 -- Supabase exposes every table in the public schema through its REST API. Enabling RLS with no
