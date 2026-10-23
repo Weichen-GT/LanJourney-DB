@@ -8,7 +8,8 @@
 --           migrations/2026-10-04_article_generation.sql has been run (after the backend is live).
 -- Result 2: counts. Expected on a database loaded from the seed files:
 --           words = ranked = 11,067; meanings = 22,041 (a little more if the app added AI meanings);
---           meanings_with_wordnet_id = 20,757. The two reader counts are whatever you really have.
+--           meanings_with_wordnet_id = 20,757. After updates/2026-10-23_idless_cleanup.sql (prod has it):
+--           meanings = 21,792 and meanings_with_wordnet_id = 20,967. The two reader counts are whatever you really have.
 -- Result 3: spot check of words added by the vocabulary expansion (ranks from the seed files).
 -- Keep this file current: add a row to Result 1 whenever a migration adds something to verify.
 -- =========================================================================
