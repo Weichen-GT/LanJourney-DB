@@ -1,0 +1,576 @@
+-- ====================================================================================================
+-- 2026-10-23: clean up the content-word meanings that have no WordNet id (TODO.md section 5, design doc P6).
+--   * 210 meanings get their WordNet id attached (8 of them also get the part of speech WordNet uses)
+--   * 249 meanings are DELETED: junk (surnames, function words tagged as nouns, typos), copies of a noun
+--     used as a modifier, invented or duplicate senses
+--   * 460 are left as they are (correct meanings WordNet does not list, function words)
+--   * ranks are renumbered 1..n for words that lost a meaning, so "key meaning" (rank <= 2) stays meaningful
+-- Source of truth: LanJourney-lib/data/idless_decisions.csv (made by LanJourney-lib/scripts/idless_cleanup.py),
+-- approved by the owner. Run it AFTER the vocabulary expansion seeds (ops guide A2b) are on this database.
+--
+-- This is ONE statement (a DO block), so it is all-or-nothing in any SQL editor.
+--
+-- HOW TO RUN
+--   1. Run it as is (dry_run = TRUE). It does everything, then deliberately fails with a message that
+--      starts "DRY RUN OK" and lists the numbers -- the failure is what rolls everything back. Nothing is saved.
+--      A message starting with anything else means STOP and send it to me.
+--   2. If the numbers are right, change  dry_run CONSTANT BOOLEAN := TRUE  to  FALSE  and run it again.
+--      "Success. No rows returned" means it was applied.
+--   3. Verify with the SELECTs at the bottom (run them separately).
+-- It aborts, saving nothing, if a target row is missing or already changed, if a WordNet id to attach is already
+-- used by another meaning of the same word, or if any reader, article, review, quiz or conversation row points
+-- at a meaning that would be deleted. A copy of every affected word's meanings is kept in
+-- meaning_backup_20261023 (see RESTORE at the bottom).
+
+DO $body$
+DECLARE
+  dry_run CONSTANT BOOLEAN := TRUE;   -- <<< change to FALSE to apply for real
+  d INT; a INT; refs INT; clashes INT; before_n INT; after_n INT; empty_before INT; empty_after INT;
+  with_id_before INT; with_id_after INT;
+BEGIN
+  CREATE TEMP TABLE _t (term TEXT, sense_key TEXT, action TEXT, old_pos TEXT, new_id TEXT, new_pos TEXT) ON COMMIT DROP;
+  INSERT INTO _t VALUES
+    ('able', 'sense_2', 'delete', 'n', '', ''),
+    ('about', 'sense_2', 'attach', 'adj', 'a#32471', ''),
+    ('about', 'sense_4', 'delete', 'n', '', ''),
+    ('accident', 'sense_2', 'delete', 'adv', '', ''),
+    ('accident', 'sense_3', 'delete', 'adv', '', ''),
+    ('active', 'sense_6', 'attach', 'n', 'n#13825370', ''),
+    ('active', 'sense_7', 'attach', 'n', 'n#9784323', ''),
+    ('addict', 'sense_3', 'attach', 'v', 'v#1167606', ''),
+    ('additive', 'n_1', 'attach', 'n', 'n#2682642', ''),
+    ('affect', 'noun_1', 'attach', 'n', 'n#7495066', ''),
+    ('affluent', 'n_1', 'attach', 'n', 'n#9301903', ''),
+    ('afford', 'sense_2', 'delete', 'n', '', ''),
+    ('again', 'sense_4', 'delete', 'n', '', ''),
+    ('against', 'sense_2', 'delete', 'adj', '', ''),
+    ('ago', 'sense_2', 'delete', 'n', '', ''),
+    ('airline', 'sense_2', 'delete', 'adj', '', ''),
+    ('all', 'sense_3', 'delete', 'n', '', ''),
+    ('also', 'sense_3', 'delete', 'n', '', ''),
+    ('and', 'sense_2', 'delete', 'n', '', ''),
+    ('animal', 'sense_2', 'delete', 'adj', '', ''),
+    ('any', 'sense_6', 'delete', 'n', '', ''),
+    ('arrive', 'sense_4', 'delete', 'n', '', ''),
+    ('arrive', 'sense_5', 'delete', 'n', '', ''),
+    ('art', 'sense_1', 'delete', 'adj', '', ''),
+    ('article', 'sense_4', 'attach', 'v', 'v#886603', ''),
+    ('attendant', 'sense_1', 'attach', 'adj', 'a#123654', ''),
+    ('attendant', 'sense_4', 'attach', 'adj', 'a#1852738', ''),
+    ('auspicious', 'n_1', 'attach', 'n', 'a#177411', 'adj'),
+    ('autumn', 'sense_2', 'delete', 'adj', '', ''),
+    ('baby', 'sense_3', 'attach', 'v', 'v#2576182', ''),
+    ('baby', 'sense_4', 'delete', 'adj', '', ''),
+    ('bamboo', 'sense_3', 'delete', 'adj', '', ''),
+    ('barren', 'sense_6', 'attach', 'n', 'n#8521615', ''),
+    ('be', 'sense_3', 'delete', 'n', '', ''),
+    ('bedroom', 'adj_1', 'delete', 'adj', '', ''),
+    ('behind', 'sense_5', 'attach', 'n', 'n#5566889', ''),
+    ('bell', 'sense_4', 'attach', 'v', 'v#1299860', ''),
+    ('below', 'sense_3', 'delete', 'n', '', ''),
+    ('bent', 'v_1', 'attach', 'v', 'v#2039764', ''),
+    ('best', 'adv_1', 'attach', 'adv', 'r#189649', ''),
+    ('betrayal', 'n_1', 'attach', 'n', 'n#751065', ''),
+    ('beyond', 'sense_3', 'delete', 'n', '', ''),
+    ('body', 'sense_5', 'attach', 'v', 'v#2704786', ''),
+    ('boil', 'noun_1', 'attach', 'n', 'n#5021283', ''),
+    ('boring', 'sense_2', 'attach', 'n', 'n#2878475', ''),
+    ('boring', 'sense_3', 'attach', 'v', 'v#1445640', ''),
+    ('born', 'sense_3', 'delete', 'n', '', ''),
+    ('born', 'sense_4', 'delete', 'n', '', ''),
+    ('borrow', 'sense_4', 'delete', 'n', '', ''),
+    ('both', 'sense_3', 'delete', 'n', '', ''),
+    ('bowel', 'v_1', 'delete', 'v', '', ''),
+    ('bread', 'sense_4', 'attach', 'v', 'v#1340335', ''),
+    ('brew', 'sense_2', 'attach', 'n', 'n#7902547', ''),
+    ('brisk', 'sense_1', 'attach', 'v', 'v#206174', ''),
+    ('buck', 'sense_2', 'delete', 'adj', '', ''),
+    ('building', 'sense_2', 'attach', 'v', 'v#1658171', ''),
+    ('bull', 'adj_2', 'delete', 'adj', '', ''),
+    ('bust', 'adj_1', 'attach', 'adj', 'a#2030538', ''),
+    ('but', 'sense_5', 'delete', 'n', '', ''),
+    ('buzz word', 'n_1', 'attach', 'n', 'n#6620630', ''),
+    ('bye', 'adj_3', 'delete', 'adj', '', ''),
+    ('camel', 'adj_1', 'delete', 'adj', '', ''),
+    ('candle', 'sense_2', 'attach', 'v', 'v#2154329', ''),
+    ('candy', 'sense_4', 'delete', 'adj', '', ''),
+    ('candy', 'sense_5', 'delete', 'adv', '', ''),
+    ('careless', 'sense_3', 'delete', 'n', '', ''),
+    ('carry', 'sense_2', 'attach', 'n', 'n#319561', ''),
+    ('casual', 'sense_4', 'delete', 'n', '', ''),
+    ('casual', 'sense_5', 'delete', 'n', '', ''),
+    ('cease', 'noun_1', 'attach', 'n', 'n#15293068', ''),
+    ('certain', 'sense_3', 'delete', 'n', '', ''),
+    ('cheap', 'sense_4', 'delete', 'adv', '', ''),
+    ('cheese', 'sense_3', 'delete', 'adj', '', ''),
+    ('China', 'sense_2', 'delete', 'adj', '', ''),
+    ('chopsticks', 'n_1', 'attach', 'n', 'n#3029438', ''),
+    ('church', 'sense_4', 'delete', 'adj', '', ''),
+    ('church', 'sense_5', 'attach', 'v', 'v#2083398', ''),
+    ('city', 'sense_3', 'delete', 'adj', '', ''),
+    ('clear', 'sense_7', 'attach', 'n', 'n#8649998', ''),
+    ('cleft', 'v_1', 'attach', 'v', 'v#1559354', ''),
+    ('club', 'sense_7', 'delete', 'adj', '', ''),
+    ('cocktail', 'adj_1', 'delete', 'adj', '', ''),
+    ('coddle', 'noun_1', 'delete', 'n', '', ''),
+    ('code', 'v_1', 'attach', 'v', 'v#996121', ''),
+    ('collect', 'sense_3', 'attach', 'n', 'n#7204293', ''),
+    ('common', 'sense_4', 'attach', 'n', 'n#8632949', ''),
+    ('compare', 'sense_1', 'attach', 'n', 'n#4754082', ''),
+    ('concentrate', 'sense_3', 'attach', 'n', 'n#7582955', ''),
+    ('concert', 'sense_6', 'delete', 'adj', '', ''),
+    ('conduct', 'sense_1', 'attach', 'n', 'n#4904939', ''),
+    ('conduct', 'sense_3', 'delete', 'n', '', ''),
+    ('confiscate', 'adj_1', 'attach', 'adj', 'a#1455164', ''),
+    ('conservatory', 'a_1', 'delete', 'adj', '', ''),
+    ('conserve', 'sense_2', 'attach', 'n', 'n#7658080', ''),
+    ('consonant', 'adj_1', 'attach', 'adj', 'a#579473', ''),
+    ('construct', 'sense_4', 'attach', 'n', 'n#5844071', ''),
+    ('contour', 'verb_1', 'attach', 'v', 'v#1693647', ''),
+    ('contour', 'adjective_1', 'delete', 'adj', '', ''),
+    ('contravene', 'adjective_1', 'attach', 'adj', 'v#825097', 'v'),
+    ('cool', 'sense_3', 'attach', 'v', 'v#370517', ''),
+    ('cool', 'sense_8', 'delete', 'v', '', ''),
+    ('cotton', 'sense_6', 'delete', 'adj', '', ''),
+    ('country', 'sense_5', 'delete', 'adj', '', ''),
+    ('country', 'sense_6', 'delete', 'adj', '', ''),
+    ('country', 'sense_7', 'delete', 'adj', '', ''),
+    ('country', 'sense_9', 'delete', 'adj', '', ''),
+    ('covenant', 'v_1', 'attach', 'v', 'v#1032865', ''),
+    ('cozy', 'sense_2', 'delete', 'v', '', ''),
+    ('cream', 'adj_1', 'delete', 'adj', '', ''),
+    ('criminal', 'adj_1', 'delete', 'adj', '', ''),
+    ('crisp', 'sense_2', 'attach', 'n', 'n#7728304', ''),
+    ('crystal', 'adj_1', 'delete', 'adj', '', ''),
+    ('dance', 'sense_7', 'delete', 'adj', '', ''),
+    ('daughter', 'sense_2', 'delete', 'adj', '', ''),
+    ('day', 'sense_4', 'delete', 'adj', '', ''),
+    ('dean', 'v_1', 'delete', 'v', '', ''),
+    ('defect', 'sense_2', 'attach', 'v', 'v#2590182', ''),
+    ('defile', 'noun_1_1', 'attach', 'n', 'n#9286818', ''),
+    ('defunct', 'n_1', 'delete', 'n', '', ''),
+    ('defy', 'sense_3', 'delete', 'n', '', ''),
+    ('descendant', 'adj_1', 'delete', 'adj', '', ''),
+    ('desert', 'a_1', 'delete', 'adj', '', ''),
+    ('designate', 'sense_4', 'attach', 'adj', 'a#1297879', ''),
+    ('designate', 'sense_5', 'delete', 'adj', '', ''),
+    ('designing', 'designing_v_1', 'attach', 'v', 'v#1641910', ''),
+    ('designing', 'designing_v_2', 'attach', 'v', 'a#150120', 'adj'),
+    ('detective', 'sense_2', 'delete', 'adj', '', ''),
+    ('deviate', 'sense_4', 'attach', 'n', 'n#10438792', ''),
+    ('devise', 'sense_3', 'attach', 'n', 'n#13284975', ''),
+    ('dirty', 'sense_3', 'attach', 'v', 'v#1536935', ''),
+    ('disease', 'sense_6', 'delete', 'v', '', ''),
+    ('disfigure', 'noun_1', 'delete', 'n', '', ''),
+    ('dismal', 'n_2', 'delete', 'n', '', ''),
+    ('downstairs', 'n_1', 'delete', 'n', '', ''),
+    ('during', 'sense_2', 'delete', 'n', '', ''),
+    ('ear', 'sense_3', 'delete', 'v', '', ''),
+    ('early', 'sense_3', 'delete', 'n', '', ''),
+    ('elapse', 'sense_1', 'attach', 'n', 'v#2076777', 'v'),
+    ('elbow', 'verb_1', 'attach', 'v', 'v#1877935', ''),
+    ('electric', 'sense_6', 'attach', 'n', 'n#3273701', ''),
+    ('electric', 'sense_7', 'delete', 'n', '', ''),
+    ('else', 'sense_3', 'delete', 'n', '', ''),
+    ('enemy', 'sense_2', 'delete', 'adj', '', ''),
+    ('entail', 'sense_3', 'attach', 'n', 'n#50729', ''),
+    ('entitled', 'verb_1', 'attach', 'v', 'v#2452235', ''),
+    ('entitled', 'verb_2', 'attach', 'v', 'v#1031533', ''),
+    ('envelop', 'noun_1', 'delete', 'n', '', ''),
+    ('evening', 'sense_1', 'delete', 'adj', '', ''),
+    ('ever', 'sense_5', 'delete', 'n', '', ''),
+    ('ever', 'sense_6', 'delete', 'n', '', ''),
+    ('ever', 'sense_7', 'delete', 'n', '', ''),
+    ('ever', 'sense_8', 'delete', 'n', '', ''),
+    ('every', 'sense_2', 'delete', 'n', '', ''),
+    ('everyday', 'sense_2', 'delete', 'n', '', ''),
+    ('exasperate', 'adj_1', 'delete', 'adj', '', ''),
+    ('express', 'sense_6', 'attach', 'n', 'n#3311330', ''),
+    ('express', 'sense_7', 'attach', 'n', 'n#6276128', ''),
+    ('express', 'sense_9', 'delete', 'n', '', ''),
+    ('external', 'sense_3', 'attach', 'n', 'n#5860572', ''),
+    ('family', 'sense_1', 'delete', 'adj', '', ''),
+    ('fashion', 'sense_3', 'attach', 'v', 'v#1662082', ''),
+    ('favorite', 'adj_1', 'attach', 'adj', 'a#1465804', ''),
+    ('festival', 'sense_2', 'delete', 'adj', '', ''),
+    ('find', 'noun_1', 'attach', 'n', 'n#5816226', ''),
+    ('flaw', 'sense_2', 'attach', 'v', 'v#263930', ''),
+    ('flimsy', 'n_1', 'attach', 'n', 'n#14993813', ''),
+    ('fly', 'sense_4', 'attach', 'adj', 'a#92990', ''),
+    ('fog', 'vt_1', 'attach', 'v', 'v#2162161', ''),
+    ('forge', 'sense_4', 'attach', 'n', 'n#3388492', ''),
+    ('formal', 'sense_6', 'attach', 'n', 'n#7463485', ''),
+    ('fort', 'sense_3', 'attach', 'v', 'v#1609126', ''),
+    ('forthright', 'n_1', 'delete', 'n', '', ''),
+    ('foul', 'sense_8', 'attach', 'n', 'n#772486', ''),
+    ('free', 'sense_6', 'delete', 'n', '', ''),
+    ('free', 'sense_7', 'delete', 'n', '', ''),
+    ('friendly', 'n_1', 'delete', 'n', '', ''),
+    ('fruit', 'sense_3', 'attach', 'v', 'v#1656273', ''),
+    ('full', 'sense_6', 'attach', 'v', 'v#434621', ''),
+    ('fulminate', 'noun_1', 'attach', 'n', 'n#14822879', ''),
+    ('game', 'sense_3', 'attach', 'v', 'v#1141530', ''),
+    ('garner', 'n_1', 'attach', 'n', 'n#3457393', ''),
+    ('gate', 'sense_2', 'attach', 'v', 'v#2358840', ''),
+    ('glad', 'n_1', 'delete', 'n', '', ''),
+    ('glamour', 'sense_2', 'attach', 'v', 'v#779033', ''),
+    ('golden', 'n_1', 'delete', 'n', '', ''),
+    ('gown', 'verb_1', 'attach', 'v', 'v#106346', ''),
+    ('graduate', 'adj_2', 'delete', 'adj', '', ''),
+    ('greeting', 'v_1', 'attach', 'v', 'v#898754', ''),
+    ('grope', 'sense_2', 'attach', 'n', 'n#141847', ''),
+    ('ground', 'adj_1', 'delete', 'adj', '', ''),
+    ('group', 'adj_1', 'delete', 'adj', '', ''),
+    ('guest', 'adj_1', 'delete', 'adj', '', ''),
+    ('guise', 'verb_1', 'delete', 'v', '', ''),
+    ('haggle', 'noun_1', 'attach', 'n', 'n#7164846', ''),
+    ('hair', 'adj_1', 'delete', 'adj', '', ''),
+    ('ham', 'sense_4', 'attach', 'v', 'v#1754981', ''),
+    ('happy', 'sense_2', 'delete', 'n', '', ''),
+    ('hard', 'sense_5', 'delete', 'n', '', ''),
+    ('hardy', 'sense_5', 'delete', 'adv', '', ''),
+    ('hardy', 'sense_7', 'delete', 'adv', '', ''),
+    ('haunt', 'sense_2', 'attach', 'n', 'n#8599031', ''),
+    ('heart', 'sense_7', 'delete', 'v', '', ''),
+    ('heavy', 'sense_5', 'attach', 'n', 'n#5938368', ''),
+    ('her', 'sense_4', 'delete', 'n', '', ''),
+    ('heroic', 'n_1', 'attach', 'n', 'n#6397799', ''),
+    ('hers', 'sense_2', 'delete', 'n', '', ''),
+    ('hers', 'sense_3', 'delete', 'n', '', ''),
+    ('hinder', 'sense_2', 'attach', 'adj', 'a#132764', ''),
+    ('hinge', 'sense_3', 'attach', 'v', 'v#1299760', ''),
+    ('hinge', 'sense_6', 'delete', 'v', '', ''),
+    ('his', 'sense_2', 'delete', 'n', '', ''),
+    ('holiday', 'sense_2', 'attach', 'v', 'v#2714581', ''),
+    ('hopeful', 'n_1', 'attach', 'n', 'n#9820956', ''),
+    ('horizontal', 'n_1', 'attach', 'n', 'n#13850894', ''),
+    ('hot', 'sense_8', 'delete', 'n', '', ''),
+    ('hotel', 'sense_3', 'delete', 'v', '', ''),
+    ('household', 'sense_2', 'delete', 'adj', '', ''),
+    ('huge', 'sense_2', 'delete', 'n', '', ''),
+    ('husband', 'sense_2', 'attach', 'v', 'v#2273988', ''),
+    ('hybrid', 'a_2', 'delete', 'adj', '', ''),
+    ('ice', 'sense_8', 'delete', 'adj', '', ''),
+    ('illegitimate', 'n_1', 'attach', 'n', 'n#9862211', ''),
+    ('illegitimate', 'v_1', 'delete', 'v', '', ''),
+    ('immigrant', 'sense_2', 'delete', 'adj', '', ''),
+    ('immigrant', 'sense_3', 'delete', 'adj', '', ''),
+    ('implement', 'sense_3', 'attach', 'n', 'n#3569147', ''),
+    ('impromptu', 'n_1', 'attach', 'n', 'n#7254587', ''),
+    ('in', 'sense_7', 'delete', 'n', '', ''),
+    ('initiate', 'sense_3', 'attach', 'n', 'n#10383612', ''),
+    ('innocent', 'n_1', 'attach', 'n', 'n#9644529', ''),
+    ('intensive', 'sense_3', 'attach', 'n', 'n#6332047', ''),
+    ('intent', 'sense_3', 'attach', 'adj', 'a#165213', ''),
+    ('intermediate', 'n_1', 'attach', 'n', 'n#14945410', ''),
+    ('intermediate', 'vi_1', 'attach', 'v', 'v#763001', ''),
+    ('interrupt', 'sense_4', 'attach', 'n', 'n#11467628', ''),
+    ('intimate', 'sense_3', 'attach', 'v', 'v#929682', ''),
+    ('into', 'sense_2', 'delete', 'n', '', ''),
+    ('invalid', 'sense_2', 'attach', 'v', 'v#91720', ''),
+    ('invert', 'sense_2', 'attach', 'adj', 'v#387636', 'v'),
+    ('invite', 'sense_2', 'attach', 'n', 'n#7201321', ''),
+    ('its', 'sense_2', 'delete', 'n', '', ''),
+    ('jazz', 'adj_1', 'delete', 'adj', '', ''),
+    ('kid', 'sense_4', 'delete', 'adj', '', ''),
+    ('kill', 'sense_3', 'attach', 'n', 'n#1325752', ''),
+    ('lame', 'v_1', 'attach', 'v', 'v#91399', ''),
+    ('launch', 'n_1', 'attach', 'n', 'n#3652737', ''),
+    ('lay', 'sense_10', 'attach', 'n', 'n#6389921', ''),
+    ('lazy', 'sense_2', 'delete', 'n', '', ''),
+    ('leading', 'n_1', 'attach', 'n', 'n#3656591', ''),
+    ('leather', 'sense_2', 'delete', 'adj', '', ''),
+    ('left', 'sense_4', 'attach', 'v', 'v#2013448', ''),
+    ('limited', 'n_1', 'attach', 'n', 'n#3311330', ''),
+    ('live', 'noun_1', 'delete', 'n', '', ''),
+    ('live', 'noun_2', 'delete', 'n', '', ''),
+    ('lively', 'n_1', 'delete', 'n', '', ''),
+    ('lively', 'n_2', 'delete', 'n', '', ''),
+    ('locomotive', 'sense_2', 'attach', 'adj', 'a#3005956', ''),
+    ('locomotive', 'sense_3', 'delete', 'adj', '', ''),
+    ('loud', 'sense_5', 'delete', 'n', '', ''),
+    ('lurk', 'n_1', 'delete', 'n', '', ''),
+    ('mammals', 'n_1', 'attach', 'n', 'n#1864419', ''),
+    ('mangle', 'noun_1', 'attach', 'n', 'n#3722824', ''),
+    ('manifold', 'n_1', 'attach', 'n', 'n#14970888', ''),
+    ('marble', 'sense_1', 'delete', 'adj', '', ''),
+    ('marry', 'sense_2', 'delete', 'n', '', ''),
+    ('marry', 'sense_3', 'delete', 'n', '', ''),
+    ('marry', 'sense_4', 'delete', 'n', '', ''),
+    ('mass', 'sense_3', 'delete', 'adj', '', ''),
+    ('mass', 'sense_6', 'delete', 'adj', '', ''),
+    ('media', 'n_1', 'attach', 'n', 'n#6272239', ''),
+    ('medicine', 'sense_4', 'attach', 'v', 'v#83983', ''),
+    ('meeting', 'sense_2', 'delete', 'v', '', ''),
+    ('method', 'sense_2', 'delete', 'adj', '', ''),
+    ('minority', 'sense_2', 'delete', 'adj', '', ''),
+    ('mobile', 'sense_3', 'attach', 'n', 'n#3781824', ''),
+    ('modern', 'sense_2', 'attach', 'n', 'n#10346217', ''),
+    ('mother', 'sense_6', 'delete', 'adj', '', ''),
+    ('motion', 'v_1', 'attach', 'v', 'v#994073', ''),
+    ('movie', 'sense_5', 'delete', 'adj', '', ''),
+    ('mum', 'adj_1', 'attach', 'adj', 'a#503732', ''),
+    ('my', 'sense_3', 'delete', 'n', '', ''),
+    ('neck', 'sense_4', 'attach', 'v', 'v#1428804', ''),
+    ('net', 'adj_1', 'attach', 'adj', 'a#1586869', ''),
+    ('new', 'sense_3', 'delete', 'n', '', ''),
+    ('new', 'sense_4', 'delete', 'n', '', ''),
+    ('nice', 'sense_4', 'delete', 'n', '', ''),
+    ('nice', 'sense_5', 'attach', 'n', 'n#8957024', ''),
+    ('night', 'sense_2', 'delete', 'adj', '', ''),
+    ('nor', 'sense_2', 'delete', 'n', '', ''),
+    ('not', 'sense_2', 'delete', 'n', '', ''),
+    ('notable', 'sense_2', 'attach', 'n', 'n#10295935', ''),
+    ('now', 'sense_2', 'delete', 'adj', '', ''),
+    ('officer', 'v_1', 'attach', 'v', 'v#754341', ''),
+    ('on', 'sense_5', 'delete', 'n', '', ''),
+    ('oriental', 'n_1', 'delete', 'n', '', ''),
+    ('ours', 'sense_2', 'delete', 'n', '', ''),
+    ('outfit', 'sense_3', 'attach', 'v', 'v#2344409', ''),
+    ('outing', 'adj_1', 'delete', 'adj', '', ''),
+    ('over', 'sense_7', 'delete', 'n', '', ''),
+    ('overlook', 'sense_3', 'attach', 'n', 'n#8631679', ''),
+    ('own', 'sense_4', 'delete', 'n', '', ''),
+    ('paper', 'sense_8', 'delete', 'adj', '', ''),
+    ('parallel', 'sense_6', 'attach', 'v', 'v#2665300', ''),
+    ('partial', 'sense_3', 'attach', 'n', 'n#5728040', ''),
+    ('party', 'sense_4', 'attach', 'v', 'v#2497500', ''),
+    ('peak', 'sense_3', 'delete', 'adj', '', ''),
+    ('penal', 'n_1', 'delete', 'n', '', ''),
+    ('people', 'sense_4', 'attach', 'v', 'v#2656935', ''),
+    ('perfect', 'sense_7', 'attach', 'n', 'n#13828352', ''),
+    ('period', 'sense_5', 'delete', 'adj', '', ''),
+    ('personal', 'sense_2', 'attach', 'n', 'n#6281941', ''),
+    ('perspective', 'sense_5', 'delete', 'adj', '', ''),
+    ('persuasive', 'adv_1', 'delete', 'adv', '', ''),
+    ('persuasive', 'n_1', 'delete', 'n', '', ''),
+    ('pivot', 'verb_1', 'attach', 'v', 'v#2050521', ''),
+    ('pivot', 'adj_1', 'delete', 'adj', '', ''),
+    ('plague', 'sense_4', 'attach', 'v', 'v#1793315', ''),
+    ('pocket', 'sense_8', 'delete', 'adj', '', ''),
+    ('poke', 'noun_1', 'attach', 'n', 'n#335761', ''),
+    ('police', 'sense_3', 'delete', 'adj', '', ''),
+    ('polish', 'sense_1', 'attach', 'n', 'n#4962337', ''),
+    ('portion', 'v_1', 'attach', 'v', 'v#2233480', ''),
+    ('premium', 'v_1', 'delete', 'v', '', ''),
+    ('privilege', 'sense_1', 'attach', 'v', 'v#2459141', ''),
+    ('prize', 'sense_6', 'delete', 'adj', '', ''),
+    ('prize', 'sense_7', 'attach', 'adj', 'a#2351005', ''),
+    ('proof', 'sense_4', 'attach', 'adj', 'a#1779265', ''),
+    ('protein', 'sense_3', 'delete', 'adj', '', ''),
+    ('purple', 'sense_5', 'attach', 'v', 'v#290059', ''),
+    ('purse', 'sense_3', 'attach', 'v', 'v#145722', ''),
+    ('quick', 'sense_4', 'attach', 'n', 'n#5605735', ''),
+    ('racing', 'adj_1', 'delete', 'adj', '', ''),
+    ('rainy', 'n_1', 'delete', 'n', '', ''),
+    ('rapid', 'sense_3', 'attach', 'n', 'n#9428274', ''),
+    ('rather', 'sense_3', 'delete', 'n', '', ''),
+    ('record', 'sense_10', 'delete', 'adj', '', ''),
+    ('recover', 'sense_2', 'attach', 'n', 'v#92442', 'v'),
+    ('recover', 'sense_3', 'attach', 'n', 'v#2254246', 'v'),
+    ('regulation', 'v_1', 'delete', 'v', '', ''),
+    ('remove', 'noun_1', 'attach', 'n', 'n#5097462', ''),
+    ('renaissance', 'sense_3', 'delete', 'adj', '', ''),
+    ('renounce', 'noun_1', 'delete', 'n', '', ''),
+    ('resort', 'sense_1', 'attach', 'v', 'v#2596228', ''),
+    ('return', 'sense_3', 'delete', 'adj', '', ''),
+    ('revoke', 'noun_1', 'attach', 'n', 'n#1261891', ''),
+    ('room', 'sense_4', 'attach', 'v', 'v#2662859', ''),
+    ('rose', 'sense_8', 'attach', 'v', 'v#154951', ''),
+    ('rough', 'n_1', 'attach', 'n', 'n#8658537', ''),
+    ('sallow', 'n_1', 'attach', 'n', 'n#12748061', ''),
+    ('same', 'sense_6', 'delete', 'n', '', ''),
+    ('save', 'sense_2', 'attach', 'n', 'n#1081320', ''),
+    ('savor', 'noun_1', 'attach', 'n', 'n#5723811', ''),
+    ('scrub', 'sense_3', 'attach', 'n', 'n#8455215', ''),
+    ('sear', 'adj_1', 'attach', 'adj', 'a#2564004', ''),
+    ('seem', 'sense_3', 'delete', 'n', '', ''),
+    ('seem', 'sense_4', 'delete', 'n', '', ''),
+    ('separate', 'sense_3', 'attach', 'n', 'n#4179965', ''),
+    ('service', 'sense_7', 'delete', 'adj', '', ''),
+    ('shear', 'n_3', 'attach', 'n', 'n#4193752', ''),
+    ('shear', 'n_5', 'attach', 'n', 'n#11527156', ''),
+    ('sheer', 'sense_4', 'attach', 'v', 'v#2037140', ''),
+    ('shrink', 'sense_2', 'attach', 'n', 'n#10507601', ''),
+    ('shy', 'sense_3', 'delete', 'n', '', ''),
+    ('silk', 'sense_2', 'delete', 'adj', '', ''),
+    ('silly', 'sense_2', 'attach', 'n', 'n#10618049', ''),
+    ('size', 'sense_2', 'attach', 'v', 'v#657658', ''),
+    ('slim', 'vi_1', 'attach', 'v', 'v#45548', ''),
+    ('slipper', 'v_1', 'delete', 'v', '', ''),
+    ('slovenly', 'n_1', 'attach', 'n', 'n#10631726', ''),
+    ('slow', 'sense_8', 'delete', 'n', '', ''),
+    ('smart', 'sense_7', 'attach', 'n', 'n#14355278', ''),
+    ('so', 'sense_4', 'delete', 'n', '', ''),
+    ('so', 'sense_5', 'delete', 'n', '', ''),
+    ('sociable', 'n_1', 'attach', 'n', 'n#8273290', ''),
+    ('socks', 'n_1', 'attach', 'n', 'n#4261887', ''),
+    ('sole', 'vt_1', 'attach', 'v', 'v#534483', ''),
+    ('specialty', 'a_1', 'delete', 'adj', '', ''),
+    ('sphere', 'verb_1', 'delete', 'v', '', ''),
+    ('spoon', 'sense_2', 'attach', 'v', 'v#1582471', ''),
+    ('sport', 'verb_1', 'attach', 'v', 'v#2637740', ''),
+    ('spot', 'sense_2', 'delete', 'adj', '', ''),
+    ('state', 'sense_5', 'delete', 'adj', '', ''),
+    ('steam', 'adj_1', 'delete', 'adj', '', ''),
+    ('steel', 'adj_1', 'delete', 'adj', '', ''),
+    ('strange', 'sense_3', 'delete', 'n', '', ''),
+    ('street', 'sense_2', 'delete', 'adj', '', ''),
+    ('strong', 'sense_8', 'delete', 'n', '', ''),
+    ('such', 'sense_3', 'delete', 'n', '', ''),
+    ('summit', 'sense_5', 'delete', 'adj', '', ''),
+    ('superficial', 'sense_3', 'delete', 'n', '', ''),
+    ('sure', 'sense_3', 'delete', 'n', '', ''),
+    ('surf', 'noun_1', 'attach', 'n', 'n#7358833', ''),
+    ('surf', 'noun_3', 'delete', 'n', '', ''),
+    ('swell', 'n_2', 'attach', 'n', 'n#7362858', ''),
+    ('swimming', 'adj_1', 'delete', 'adj', '', ''),
+    ('swimming', 'v_1', 'attach', 'v', 'v#1964770', ''),
+    ('synthetic', 'n_1', 'attach', 'n', 'n#14926110', ''),
+    ('tall', 'sense_5', 'delete', 'n', '', ''),
+    ('tamper', 'noun_1', 'attach', 'n', 'n#4394793', ''),
+    ('target', 'v_1', 'attach', 'v', 'v#1153025', ''),
+    ('temperance', 'adj_2', 'attach', 'adj', 'n#4890809', 'n'),
+    ('than', 'sense_3', 'delete', 'n', '', ''),
+    ('that', 'sense_5', 'delete', 'n', '', ''),
+    ('their', 'sense_2', 'delete', 'n', '', ''),
+    ('them', 'sense_2', 'delete', 'n', '', ''),
+    ('thermal', 'n_1', 'attach', 'n', 'n#11539078', ''),
+    ('thick', 'sense_1', 'attach', 'n', 'n#8606254', ''),
+    ('thick', 'sense_2', 'delete', 'n', '', ''),
+    ('this', 'sense_4', 'delete', 'n', '', ''),
+    ('thought', 'sense_3', 'attach', 'v', 'v#691086', ''),
+    ('throng', 'adj_1', 'delete', 'adj', '', ''),
+    ('tiny', 'sense_2', 'delete', 'n', '', ''),
+    ('tiny', 'sense_3', 'delete', 'n', '', ''),
+    ('tired', 'sense_2', 'attach', 'v', 'v#74774', ''),
+    ('to', 'sense_7', 'delete', 'n', '', ''),
+    ('tourist', 'sense_2', 'delete', 'adj', '', ''),
+    ('training', 'v_1', 'attach', 'v', 'v#835381', ''),
+    ('treat', 'noun_1', 'attach', 'n', 'n#7304081', ''),
+    ('trial', 'sense_8', 'delete', 'adj', '', ''),
+    ('truck', 'sense_3', 'delete', 'adj', '', ''),
+    ('true', 'sense_4', 'attach', 'v', 'v#466204', ''),
+    ('tumble', 'noun_1', 'attach', 'n', 'n#438728', ''),
+    ('tumble', 'noun_2', 'delete', 'n', '', ''),
+    ('tumble', 'noun_3', 'attach', 'n', 'n#77704', ''),
+    ('underwater', 'adv_1', 'delete', 'adv', '', ''),
+    ('unfortunate', 'n_1', 'attach', 'n', 'n#9653829', ''),
+    ('up', 'sense_4', 'delete', 'n', '', ''),
+    ('up', 'sense_9', 'delete', 'n', '', ''),
+    ('up', 'sense_10', 'delete', 'n', '', ''),
+    ('vacuum', 'a_1', 'delete', 'adj', '', ''),
+    ('VCD', 'vcd_2', 'delete', 'n', '', ''),
+    ('vegetable', 'sense_1', 'delete', 'adj', '', ''),
+    ('vein', 'sense_6', 'attach', 'v', 'v#1700245', ''),
+    ('vertebrate', 'a_1', 'attach', 'adj', 'a#2520120', ''),
+    ('very', 'sense_4', 'delete', 'n', '', ''),
+    ('video', 'sense_3', 'delete', 'adj', '', ''),
+    ('video', 'sense_4', 'delete', 'adj', '', ''),
+    ('vocal', 'sense_3', 'attach', 'n', 'n#7296711', ''),
+    ('volunteer', 'sense_2', 'attach', 'n', 'n#10778999', ''),
+    ('wall', 'sense_3', 'delete', 'adj', '', ''),
+    ('war', 'sense_3', 'attach', 'v', 'v#1095583', ''),
+    ('ware', 'v_1', 'delete', 'v', '', ''),
+    ('we', 'sense_3', 'delete', 'n', '', ''),
+    ('we', 'sense_4', 'delete', 'n', '', ''),
+    ('weather', 'sense_2', 'attach', 'adj', 'a#1403468', ''),
+    ('weather', 'sense_5', 'delete', 'adj', '', ''),
+    ('weekend', 'sense_2', 'delete', 'adj', '', ''),
+    ('weigh', 'noun_1', 'delete', 'n', '', ''),
+    ('weird', 'sense_2', 'attach', 'n', 'n#9609617', ''),
+    ('welfare', 'adj_1', 'delete', 'adj', '', ''),
+    ('while', 'sense_3', 'delete', 'v', '', ''),
+    ('wing', 'verb_1', 'attach', 'v', 'v#1944262', ''),
+    ('winter', 'sense_1', 'delete', 'adj', '', ''),
+    ('with', 'sense_4', 'delete', 'n', '', ''),
+    ('word', 'sense_2', 'attach', 'v', 'v#982485', ''),
+    ('yet', 'sense_4', 'delete', 'n', '', ''),
+    ('you', 'sense_2', 'delete', 'n', '', ''),
+    ('you', 'sense_4', 'delete', 'n', '', ''),
+    ('young', 'sense_3', 'attach', 'n', 'n#1324070', '');
+
+  CREATE TEMP TABLE _m ON COMMIT DROP AS
+  SELECT m.id AS meaning_id, m.vocab_id, t.action, t.new_id, t.new_pos
+  FROM _t t
+  JOIN vocabulary v ON LOWER(v.term) = LOWER(t.term)
+  JOIN meaning m ON m.vocab_id = v.id AND m.sense_key = t.sense_key AND m.part_of_speech = t.old_pos
+  WHERE m.wordnet_sense_id IS NULL;
+
+  SELECT count(*) FILTER (WHERE action = 'delete'), count(*) FILTER (WHERE action = 'attach') INTO d, a FROM _m;
+  -- 1 rows belong to the vocabulary expansion (seed 03); they may be missing if it is not on this database yet.
+  IF d < 249 OR d > 249 OR a < 209 OR a > 210 THEN
+    RAISE EXCEPTION 'expected 249-249 deletes + 209-210 attaches, matched % + % -- aborting, nothing changed (is the vocabulary expansion applied?)', d, a;
+  END IF;
+
+  SELECT count(*) INTO clashes
+  FROM _m x JOIN meaning o ON o.vocab_id = x.vocab_id AND o.wordnet_sense_id = x.new_id
+  WHERE x.action = 'attach';
+  IF clashes > 0 THEN
+    RAISE EXCEPTION '% meanings already use a WordNet id this script would attach -- aborting, nothing changed', clashes;
+  END IF;
+
+  SELECT (SELECT count(*) FROM user_meaning        WHERE meaning_id IN (SELECT meaning_id FROM _m WHERE action = 'delete'))
+       + (SELECT count(*) FROM article_meaning     WHERE meaning_id IN (SELECT meaning_id FROM _m WHERE action = 'delete'))
+       + (SELECT count(*) FROM meaning_review      WHERE meaning_id IN (SELECT meaning_id FROM _m WHERE action = 'delete'))
+       + (SELECT count(*) FROM daily_quiz_question WHERE meaning_id IN (SELECT meaning_id FROM _m WHERE action = 'delete'))
+       + (SELECT count(*) FROM quiz_item           WHERE meaning_id IN (SELECT meaning_id FROM _m WHERE action = 'delete'))
+       + (SELECT count(*) FROM conversation_target WHERE meaning_id IN (SELECT meaning_id FROM _m WHERE action = 'delete'))
+    INTO refs;
+  IF refs > 0 THEN
+    RAISE EXCEPTION '% rows reference meanings that would be deleted -- aborting, nothing changed', refs;
+  END IF;
+
+  -- Built-in backup: every meaning of every affected word, exactly as it is right now.
+  CREATE TABLE meaning_backup_20261023 AS
+  SELECT * FROM meaning WHERE vocab_id IN (SELECT vocab_id FROM _m);
+  ALTER TABLE meaning_backup_20261023 ENABLE ROW LEVEL SECURITY;  -- keep it off the public API
+
+  SELECT count(*), count(*) FILTER (WHERE wordnet_sense_id IS NOT NULL) INTO before_n, with_id_before FROM meaning;
+  SELECT count(*) INTO empty_before FROM vocabulary v WHERE NOT EXISTS (SELECT 1 FROM meaning m WHERE m.vocab_id = v.id);
+
+  UPDATE meaning m
+  SET wordnet_sense_id = x.new_id, part_of_speech = COALESCE(NULLIF(x.new_pos, ''), m.part_of_speech)
+  FROM _m x WHERE x.meaning_id = m.id AND x.action = 'attach';
+
+  DELETE FROM meaning WHERE id IN (SELECT meaning_id FROM _m WHERE action = 'delete');
+
+  UPDATE meaning m SET rank = q.new_rank
+  FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY vocab_id ORDER BY rank, id) AS new_rank
+        FROM meaning
+        WHERE vocab_id IN (SELECT vocab_id FROM _m WHERE action = 'delete')) q
+  WHERE m.id = q.id AND m.rank <> q.new_rank;
+
+  SELECT count(*), count(*) FILTER (WHERE wordnet_sense_id IS NOT NULL) INTO after_n, with_id_after FROM meaning;
+  SELECT count(*) INTO empty_after FROM vocabulary v WHERE NOT EXISTS (SELECT 1 FROM meaning m WHERE m.vocab_id = v.id);
+
+  IF after_n <> before_n - d OR with_id_after <> with_id_before + a OR empty_after <> empty_before THEN
+    RAISE EXCEPTION 'unexpected result: meanings % -> %, with an id % -> %, words without meanings % -> % -- aborting, nothing changed',
+      before_n, after_n, with_id_before, with_id_after, empty_before, empty_after;
+  END IF;
+
+  IF dry_run THEN
+    RAISE EXCEPTION 'DRY RUN OK (this error is expected; nothing was saved): deleted=%, ids attached=%, meanings % -> %, with an id % -> %, words without meanings % -> % (must be equal)',
+      d, a, before_n, after_n, with_id_before, with_id_after, empty_before, empty_after;
+  END IF;
+END
+$body$;
+
+-- Verify after a real run (run each separately):
+--   SELECT count(*) AS meanings, count(*) FILTER (WHERE wordnet_sense_id IS NOT NULL) AS with_id,
+--          count(*) FILTER (WHERE wordnet_sense_id IS NULL AND part_of_speech IN ('n','v','adj','adv')) AS content_without_id
+--   FROM meaning;                                         -- expect content_without_id about 460
+--   SELECT count(*) FROM vocabulary v WHERE NOT EXISTS (SELECT 1 FROM meaning m WHERE m.vocab_id = v.id);  -- same as before the run
+
+-- =====================================================================================================
+-- RESTORE (only if you applied it and want to undo). Run on its own:
+--
+--   BEGIN;
+--   INSERT INTO meaning SELECT * FROM meaning_backup_20261023 b WHERE b.id NOT IN (SELECT id FROM meaning);
+--   UPDATE meaning m SET wordnet_sense_id = b.wordnet_sense_id, part_of_speech = b.part_of_speech, rank = b.rank
+--     FROM meaning_backup_20261023 b WHERE b.id = m.id;
+--   COMMIT;
+--
+-- Once you are happy with the result (a week or so), remove the backup table:
+--   DROP TABLE meaning_backup_20261023;
+-- =====================================================================================================
