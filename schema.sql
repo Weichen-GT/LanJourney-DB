@@ -448,10 +448,16 @@ CREATE TABLE
     context_score SMALLINT,
     partner_action TEXT CHECK (partner_action IN ('IMPROVE', 'RE_ASK_NAME_IT', 'RE_ASK_REPHRASE', 'REVEAL_WORD', 'REDIRECT_WRONG_SENSE', 'NEXT_TARGET', 'STEER_BACK', 'WRAP_UP')),  -- USER messages: what the partner does next (decided when the message is graded)
     improve_angle TEXT,              -- USER messages: CAUSE, EXAMPLE or CONSEQUENCE, for an IMPROVE action
+    flag TEXT CHECK (flag IS NULL OR flag IN ('OFF_TOPIC', 'INJECTION', 'MODERATION', 'SELF_HARM')),  -- USER messages: why it was a safety event (strike rules); NULL on a normal message; kept after the text is erased
     grader_json TEXT,                -- the grader's full answer (quotes the user); NULL after the retention period
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (session_id, turn)
   );
+
+-- The strike rules and the weekly review read only flagged messages, newest first.
+CREATE INDEX IF NOT EXISTS idx_conversation_message_flag
+  ON conversation_message (created_at)
+  WHERE flag IS NOT NULL;
 
 -- =========================
 -- 17) conversation_target: one word meaning tested in a Conversation, and how it went

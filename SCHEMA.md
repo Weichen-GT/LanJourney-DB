@@ -516,15 +516,21 @@ every message of a Conversation. The text (and the grader's answer, which quotes
 | `context_score` | smallint | yes |  |  |
 | `partner_action` | text | yes |  | USER messages: what the partner does next (decided when the message is graded) |
 | `improve_angle` | text | yes |  | USER messages: CAUSE, EXAMPLE or CONSEQUENCE, for an IMPROVE action |
+| `flag` | text | yes |  | USER messages: why it was a safety event (strike rules); NULL on a normal message; kept after the text is erased |
 | `grader_json` | text | yes |  | the grader's full answer (quotes the user); NULL after the retention period |
 | `created_at` | timestamp with time zone | no | now() |  |
 
 **Constraints**
 
+- `conversation_message_flag_check` (check): `CHECK (((flag IS NULL) OR (flag = ANY (ARRAY['OFF_TOPIC'::text, 'INJECTION'::text, 'MODERATION'::text, 'SELF_HARM'::text]))))`
 - `conversation_message_partner_action_check` (check): `CHECK ((partner_action = ANY (ARRAY['IMPROVE'::text, 'RE_ASK_NAME_IT'::text, 'RE_ASK_REPHRASE'::text, 'REVEAL_WORD'::text, 'REDIRECT_WRONG_SENSE'::text, 'NEXT_TARGET'::text, 'STEER_BACK'::text, 'WRAP_UP'::text])))`
 - `conversation_message_role_check` (check): `CHECK ((role = ANY (ARRAY['USER'::text, 'AI'::text])))`
 - `conversation_message_verdict_check` (check): `CHECK ((verdict = ANY (ARRAY['NOT_USED'::text, 'WRONG_SENSE'::text, 'THIN'::text, 'ALMOST'::text, 'PASS'::text])))`
 - `conversation_message_session_id_turn_key` (unique): `UNIQUE (session_id, turn)`
+
+**Indexes**
+
+- `idx_conversation_message_flag`: `index on conversation_message USING btree (created_at) WHERE (flag IS NOT NULL)`
 
 ## conversation_target
 
