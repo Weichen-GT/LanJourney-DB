@@ -179,6 +179,70 @@ CREATE INDEX IF NOT EXISTS idx_generated_article_open
 ALTER TABLE generated_article ENABLE ROW LEVEL SECURITY;
 
 -- -------------------------------------------------------------------------
+-- B1: scenario_bank (global scenes per topic or interest label, written once by a
+-- model) and reader_scene_use (a reader's own use and blocks of those scenes).
+-- B12: reader_interest -- the reader's interest tree; the score is computed from
+-- these evidence counts by the backend.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS scenario_bank (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  label      TEXT NOT NULL,
+  scene      TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_scenario_bank_label_scene ON scenario_bank (label, lower(scene));
+ALTER TABLE scenario_bank ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS reader_scene_use (
+  user_id      UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  scene_id     UUID NOT NULL REFERENCES scenario_bank (id) ON DELETE CASCADE,
+  times_used   INT NOT NULL DEFAULT 0,
+  last_used_at TIMESTAMPTZ,
+  blocked      BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (user_id, scene_id)
+);
+ALTER TABLE reader_scene_use ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS reader_interest (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id            UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  parent_topic       TEXT NOT NULL CHECK (parent_topic IN (
+                       'DAILY_LIFE', 'FOOD', 'SHOPPING_SERVICES', 'TRAVEL', 'HEALTH', 'SOCIAL_LIFE',
+                       'WORK', 'JOB_SEARCH', 'EDUCATION', 'ENTERTAINMENT', 'SPORTS_HOBBIES',
+                       'TECHNOLOGY', 'MONEY', 'LIVING_ABROAD', 'NATURE')),
+  level              SMALLINT NOT NULL DEFAULT 1 CHECK (level IN (1, 2)),
+  label              TEXT NOT NULL,
+  parent_interest_id UUID REFERENCES reader_interest (id) ON DELETE CASCADE,
+  pasted             INT NOT NULL DEFAULT 0,
+  profile            INT NOT NULL DEFAULT 0,
+  completed          INT NOT NULL DEFAULT 0,
+  thumbs_up          INT NOT NULL DEFAULT 0,
+  opened             INT NOT NULL DEFAULT 0,
+  negative           INT NOT NULL DEFAULT 0,
+  delivered          INT NOT NULL DEFAULT 0,
+  last_engaged_at    TIMESTAMPTZ,
+  blocked_scope      TEXT CHECK (blocked_scope IN ('SCENE', 'AREA', 'TOPIC')),
+  blocked_at         TIMESTAMPTZ,
+  first_source       TEXT NOT NULL CHECK (first_source IN ('P', 'R', 'C', 'X')),
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_reader_interest_label ON reader_interest (user_id, parent_topic, level, lower(label));
+CREATE INDEX IF NOT EXISTS idx_reader_interest_user ON reader_interest (user_id);
+ALTER TABLE reader_interest ENABLE ROW LEVEL SECURITY;
+
+-- ai_call_log gets one more purpose (writing scenes for the bank).
+ALTER TABLE ai_call_log DROP CONSTRAINT IF EXISTS ai_call_log_purpose_check;
+ALTER TABLE ai_call_log ADD CONSTRAINT ai_call_log_purpose_check CHECK (purpose IN (
+  'GENERATE', 'REGENERATE', 'SENSE_CONFIRM', 'SENTENCE_REPAIR', 'JUDGE',
+                         'SAFETY', 'INTEREST_LABEL', 'SUBAREA_PROPOSAL', 'PROFILE_EXTRACTION',
+                         'REWRITE_SELECT', 'SCENARIO_BANK'));
+
+-- generated_article: the interest node the article served (B8) and the detected words of the final
+-- text, for the reader page and for Complete (D10).
+ALTER TABLE generated_article ADD COLUMN IF NOT EXISTS interest_id UUID REFERENCES reader_interest (id) ON DELETE SET NULL;
+ALTER TABLE generated_article ADD COLUMN IF NOT EXISTS annotations JSONB;
+
+-- -------------------------------------------------------------------------
 -- C7a: user_vocab_level was never written (the onboarding quiz computed the
 -- estimate and dropped it). The new backend stores it at onboarding. For
 -- readers who already onboarded, rebuild it from their seeded words: the quiz
@@ -292,7 +356,7 @@ SELECT check_name, ok FROM (
   -- B4
   UNION ALL
   SELECT 'B4 generated_article table exists with its columns',
-         (SELECT COUNT(*) = 31 FROM information_schema.columns
+         (SELECT COUNT(*) = 33 FROM information_schema.columns
            WHERE table_name = 'generated_article')
   UNION ALL
   SELECT 'B4 generated_article is deleted with the reader (user_id ON DELETE CASCADE)',
@@ -319,6 +383,38 @@ SELECT check_name, ok FROM (
          (SELECT COUNT(*) = 2 FROM pg_indexes
            WHERE tablename = 'generated_article'
              AND indexname IN ('idx_generated_article_user', 'idx_generated_article_open'))
+  -- B1 / B12
+  UNION ALL
+  SELECT 'B1 scenario_bank and reader_scene_use exist with their columns',
+         (SELECT COUNT(*) = 4 FROM information_schema.columns WHERE table_name = 'scenario_bank')
+         AND (SELECT COUNT(*) = 5 FROM information_schema.columns WHERE table_name = 'reader_scene_use')
+  UNION ALL
+  SELECT 'B1 reader_scene_use is deleted with the reader and with the scene',
+         (SELECT COUNT(*) = 2 FROM pg_constraint
+           WHERE conrelid = 'reader_scene_use'::regclass AND contype = 'f' AND confdeltype = 'c')
+  UNION ALL
+  SELECT 'B1 a scene is unique per label (index exists)',
+         EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uq_scenario_bank_label_scene')
+  UNION ALL
+  SELECT 'B12 reader_interest exists with its columns',
+         (SELECT COUNT(*) = 18 FROM information_schema.columns WHERE table_name = 'reader_interest')
+  UNION ALL
+  SELECT 'B12 reader_interest is deleted with the reader',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'reader_interest'::regclass AND contype = 'f'
+                    AND confrelid = 'app_user'::regclass AND confdeltype = 'c')
+  UNION ALL
+  SELECT 'B12 an interest is unique per reader, topic, level and label (index exists)',
+         EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uq_reader_interest_label')
+  UNION ALL
+  SELECT 'D9 ai_call_log purpose check allows SCENARIO_BANK',
+         EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'ai_call_log'::regclass AND conname = 'ai_call_log_purpose_check'
+                    AND pg_get_constraintdef(oid) LIKE '%SCENARIO_BANK%')
+  UNION ALL
+  SELECT 'B4 generated_article has interest_id and annotations',
+         (SELECT COUNT(*) = 2 FROM information_schema.columns
+           WHERE table_name = 'generated_article' AND column_name IN ('interest_id', 'annotations'))
   -- C7a
   UNION ALL
   SELECT 'C7a every reader with onboarding-seeded words has a vocabulary estimate',

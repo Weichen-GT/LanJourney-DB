@@ -2,7 +2,7 @@
 -- RESET: DELETES EVERYTHING, then rebuilds the empty schema.
 -- GENERATED from schema.sql by tools/build_reset.py -- do not edit by hand.
 --
--- !! This drops all 22 tables with all their data (users, articles, progress, vocabulary).
+-- !! This drops all 25 tables with all their data (users, articles, progress, vocabulary).
 -- !! Only run it on a database you are happy to wipe (local dev, or an empty scratch project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
@@ -11,6 +11,9 @@
 -- =============================================================
 
 DROP TABLE IF EXISTS generated_article CASCADE;
+DROP TABLE IF EXISTS reader_interest CASCADE;
+DROP TABLE IF EXISTS reader_scene_use CASCADE;
+DROP TABLE IF EXISTS scenario_bank CASCADE;
 DROP TABLE IF EXISTS ai_call_log CASCADE;
 DROP TABLE IF EXISTS conversation_target CASCADE;
 DROP TABLE IF EXISTS conversation_message CASCADE;
@@ -539,7 +542,7 @@ CREATE TABLE
     generated_article_id UUID,       -- the draft this call served; the key to generated_article is added with that table (B4)
     purpose TEXT NOT NULL CHECK (purpose IN ('GENERATE', 'REGENERATE', 'SENSE_CONFIRM', 'SENTENCE_REPAIR', 'JUDGE',
                                              'SAFETY', 'INTEREST_LABEL', 'SUBAREA_PROPOSAL', 'PROFILE_EXTRACTION',
-                                             'REWRITE_SELECT')),
+                                             'REWRITE_SELECT', 'SCENARIO_BANK')),
     attempt INT NOT NULL DEFAULT 1,  -- the try within one request (1 = first)
     model TEXT NOT NULL,
     prompt_version TEXT,             -- e.g. gen-v2
@@ -561,6 +564,65 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_ai_call_log_created_at ON ai_call_log (created_at);
 -- a reader's calls (account view, per-reader cost)
 CREATE INDEX IF NOT EXISTS idx_ai_call_log_user ON ai_call_log (user_id, created_at DESC);
+
+-- =========================
+-- 18b) scenario_bank (global, no personal data) and reader_scene_use (B1): everyday scenes for each topic or
+--     interest label, written once by a model and reused for everyone. A reader's own use and blocks live in
+--     reader_scene_use, so one reader's "not for me" never changes the shared bank.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS scenario_bank (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    label TEXT NOT NULL,             -- a parent topic (ParentTopic name) or a reader-interest area label
+    scene TEXT NOT NULL,             -- one short situation, e.g. "reporting a blocker in a daily standup"
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+-- the same scene is never stored twice for a label (compared case-insensitively)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_scenario_bank_label_scene ON scenario_bank (label, lower(scene));
+
+CREATE TABLE
+  IF NOT EXISTS reader_scene_use (
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    scene_id UUID NOT NULL REFERENCES scenario_bank (id) ON DELETE CASCADE,
+    times_used INT NOT NULL DEFAULT 0,
+    last_used_at TIMESTAMPTZ,
+    blocked BOOLEAN NOT NULL DEFAULT FALSE,   -- "not for me": this reader never gets the scene again
+    PRIMARY KEY (user_id, scene_id)
+  );
+
+-- =========================
+-- 18c) reader_interest (B12): the reader's interest tree. Level 1 = interest area ("computer science"), level 2 =
+--     sub-area ("machine learning", later). The score is computed from the evidence counts and
+--     last_engaged_at (so the weights can change without a migration).
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS reader_interest (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    parent_topic TEXT NOT NULL CHECK (parent_topic IN (
+                    'DAILY_LIFE', 'FOOD', 'SHOPPING_SERVICES', 'TRAVEL', 'HEALTH', 'SOCIAL_LIFE',
+                    'WORK', 'JOB_SEARCH', 'EDUCATION', 'ENTERTAINMENT', 'SPORTS_HOBBIES',
+                    'TECHNOLOGY', 'MONEY', 'LIVING_ABROAD', 'NATURE')),
+    level SMALLINT NOT NULL DEFAULT 1 CHECK (level IN (1, 2)),
+    label TEXT NOT NULL,
+    parent_interest_id UUID REFERENCES reader_interest (id) ON DELETE CASCADE,
+    pasted INT NOT NULL DEFAULT 0,       -- evidence counts
+    profile INT NOT NULL DEFAULT 0,
+    completed INT NOT NULL DEFAULT 0,
+    thumbs_up INT NOT NULL DEFAULT 0,
+    opened INT NOT NULL DEFAULT 0,
+    negative INT NOT NULL DEFAULT 0,
+    delivered INT NOT NULL DEFAULT 0,
+    last_engaged_at TIMESTAMPTZ,
+    blocked_scope TEXT CHECK (blocked_scope IN ('SCENE', 'AREA', 'TOPIC')),  -- NULL = not blocked
+    blocked_at TIMESTAMPTZ,
+    first_source TEXT NOT NULL CHECK (first_source IN ('P', 'R', 'C', 'X')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_reader_interest_label ON reader_interest (user_id, parent_topic, level, lower(label));
+CREATE INDEX IF NOT EXISTS idx_reader_interest_user ON reader_interest (user_id);
 
 -- =========================
 -- 19) generated_article: an article written for a reader (design doc B4). Drafts live here; an
@@ -601,6 +663,8 @@ CREATE TABLE
     text_deleted_at TIMESTAMPTZ,
     feedback TEXT,
     not_interested_reason TEXT,
+    interest_id UUID REFERENCES reader_interest (id) ON DELETE SET NULL,  -- the interest node the article served (B8)
+    annotations JSONB,                               -- the detected words of the final text, for the reader page and Complete (D10)
     article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- set on Complete (D10)
   );
 
