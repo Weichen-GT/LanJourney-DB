@@ -35,6 +35,7 @@ CREATE TABLE
     locked_until TIMESTAMPTZ,
     avatar_url TEXT,
     locale VARCHAR(35),
+    time_zone TEXT,   -- IANA time zone of the reader, from the browser (G3)
     profile_completed BOOLEAN NOT NULL DEFAULT FALSE,
     onboarding_quiz BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -582,6 +583,94 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_reader_interest_label ON reader_interest (u
 CREATE INDEX IF NOT EXISTS idx_reader_interest_user ON reader_interest (user_id);
 
 -- =========================
+-- 18d) reader_profile (A1): what the reader told us about why they learn English. The raw answers are
+--      kept exactly as written and never edited by the extraction, so the extraction can be re-run.
+--      Private data: not logged, deleted with the account.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS reader_profile (
+    user_id UUID PRIMARY KEY REFERENCES app_user (id) ON DELETE CASCADE,
+    onboarding_status TEXT NOT NULL DEFAULT 'NONE' CHECK (onboarding_status IN ('NONE', 'ANSWERED', 'SKIPPED')),
+    onboarding_answers JSONB,        -- question id -> the reader's text, as written
+    self_rated_level TEXT,
+    description TEXT,                -- "describe your day" (later)
+    notes TEXT,
+    extraction JSONB,                -- the model's structured reading of the answers
+    extraction_version TEXT,
+    extraction_status TEXT NOT NULL DEFAULT 'NONE' CHECK (extraction_status IN ('NONE', 'PENDING', 'DONE', 'FAILED')),
+    purpose TEXT,
+    deadline_date DATE,
+    deadline_note TEXT,
+    register TEXT,
+    skills_needed JSONB,
+    situations JSONB,
+    vocabulary_themes JSONB,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+-- =========================
+-- 18e) profile_suggestion (A6): an interest the extraction guessed from the answers, shown as a one-tap
+--      chip ("We think you want ... Right?"). Yes makes it an interest; No hides it for good.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS profile_suggestion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    parent_topic TEXT NOT NULL CHECK (parent_topic IN (
+                    'DAILY_LIFE', 'FOOD', 'SHOPPING_SERVICES', 'TRAVEL', 'HEALTH', 'SOCIAL_LIFE',
+                    'WORK', 'JOB_SEARCH', 'EDUCATION', 'ENTERTAINMENT', 'SPORTS_HOBBIES',
+                    'TECHNOLOGY', 'MONEY', 'LIVING_ABROAD', 'NATURE')),
+    area TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('STATED', 'INFERRED')),
+    confidence NUMERIC(3, 2),
+    evidence TEXT,                   -- the reader's own words that support it (a short quote)
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CONFIRMED', 'REJECTED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    decided_at TIMESTAMPTZ
+  );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_profile_suggestion_area ON profile_suggestion (user_id, parent_topic, lower(area));
+
+-- =========================
+-- 18f) email_preference (G3/G8): whether the reader gets the article emails, and how often.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS email_preference (
+    user_id UUID PRIMARY KEY REFERENCES app_user (id) ON DELETE CASCADE,
+    emails_enabled BOOLEAN NOT NULL DEFAULT TRUE,   -- the profile-page switch; unsubscribing turns it off
+    frequency_days INT NOT NULL DEFAULT 2 CHECK (frequency_days BETWEEN 1 AND 7),
+    send_hour_local INT NOT NULL DEFAULT 8 CHECK (send_hour_local BETWEEN 0 AND 23),
+    paused_until TIMESTAMPTZ,
+    unsubscribed_at TIMESTAMPTZ,
+    unsubscribe_reason TEXT,
+    unsubscribe_feedback TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+-- =========================
+-- 18g) email_send (G2): one row per article email, so a re-run of the job never sends twice
+--      (one row per reader and local day).
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS email_send (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    send_date DATE NOT NULL,         -- the reader's local day
+    subject TEXT,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SENT', 'FAILED', 'SKIPPED')),
+    attempts INT NOT NULL DEFAULT 0,
+    provider_message_id TEXT,
+    error TEXT,
+    scheduled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    sent_at TIMESTAMPTZ,
+    bounced_at TIMESTAMPTZ,
+    complained_at TIMESTAMPTZ,
+    first_clicked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (user_id, send_date)
+  );
+
+-- =========================
 -- 19) generated_article: an article written for a reader (design doc B4). Drafts live here; an
 --     article row is created only when the reader completes it, so unread drafts never touch
 --     article / user_article / the vocabulary. After 30 days unread (60 days after the first open)
@@ -622,6 +711,7 @@ CREATE TABLE
     not_interested_reason TEXT,
     interest_id UUID REFERENCES reader_interest (id) ON DELETE SET NULL,  -- the interest node the article served (B8)
     annotations JSONB,                               -- the detected words of the final text, for the reader page and Complete (D10)
+    send_id UUID REFERENCES email_send (id) ON DELETE SET NULL,   -- the email this article was sent in (G2)
     article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- set on Complete (D10)
   );
 

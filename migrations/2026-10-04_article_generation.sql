@@ -243,6 +243,90 @@ ALTER TABLE generated_article ADD COLUMN IF NOT EXISTS interest_id UUID REFERENC
 ALTER TABLE generated_article ADD COLUMN IF NOT EXISTS annotations JSONB;
 
 -- -------------------------------------------------------------------------
+-- A1: reader_profile -- the reader's answers about why they learn English (raw text kept as
+--     written; the extraction is stored beside it so it can be re-run).
+-- A6: profile_suggestion -- an interest guessed from the answers, shown as a one-tap chip.
+-- G3/G8: email_preference -- the on/off switch and frequency. G2: email_send -- one row per
+--     article email per reader and local day, so the job never sends twice.
+-- app_user.time_zone -- the reader's IANA time zone, for sending at 8 a.m. local time.
+-- generated_article.send_id -- the email an article was sent in.
+-- -------------------------------------------------------------------------
+ALTER TABLE app_user ADD COLUMN IF NOT EXISTS time_zone TEXT;
+
+CREATE TABLE IF NOT EXISTS reader_profile (
+  user_id            UUID PRIMARY KEY REFERENCES app_user (id) ON DELETE CASCADE,
+  onboarding_status  TEXT NOT NULL DEFAULT 'NONE' CHECK (onboarding_status IN ('NONE', 'ANSWERED', 'SKIPPED')),
+  onboarding_answers JSONB,
+  self_rated_level   TEXT,
+  description        TEXT,
+  notes              TEXT,
+  extraction         JSONB,
+  extraction_version TEXT,
+  extraction_status  TEXT NOT NULL DEFAULT 'NONE' CHECK (extraction_status IN ('NONE', 'PENDING', 'DONE', 'FAILED')),
+  purpose            TEXT,
+  deadline_date      DATE,
+  deadline_note      TEXT,
+  register           TEXT,
+  skills_needed      JSONB,
+  situations         JSONB,
+  vocabulary_themes  JSONB,
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE reader_profile ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS profile_suggestion (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  parent_topic TEXT NOT NULL CHECK (parent_topic IN (
+                 'DAILY_LIFE', 'FOOD', 'SHOPPING_SERVICES', 'TRAVEL', 'HEALTH', 'SOCIAL_LIFE',
+                 'WORK', 'JOB_SEARCH', 'EDUCATION', 'ENTERTAINMENT', 'SPORTS_HOBBIES',
+                 'TECHNOLOGY', 'MONEY', 'LIVING_ABROAD', 'NATURE')),
+  area         TEXT NOT NULL,
+  source       TEXT NOT NULL CHECK (source IN ('STATED', 'INFERRED')),
+  confidence   NUMERIC(3, 2),
+  evidence     TEXT,
+  status       TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CONFIRMED', 'REJECTED')),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  decided_at   TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_profile_suggestion_area ON profile_suggestion (user_id, parent_topic, lower(area));
+ALTER TABLE profile_suggestion ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS email_preference (
+  user_id              UUID PRIMARY KEY REFERENCES app_user (id) ON DELETE CASCADE,
+  emails_enabled       BOOLEAN NOT NULL DEFAULT TRUE,
+  frequency_days       INT NOT NULL DEFAULT 2 CHECK (frequency_days BETWEEN 1 AND 7),
+  send_hour_local      INT NOT NULL DEFAULT 8 CHECK (send_hour_local BETWEEN 0 AND 23),
+  paused_until         TIMESTAMPTZ,
+  unsubscribed_at      TIMESTAMPTZ,
+  unsubscribe_reason   TEXT,
+  unsubscribe_feedback TEXT,
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE email_preference ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS email_send (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  send_date           DATE NOT NULL,
+  subject             TEXT,
+  status              TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SENT', 'FAILED', 'SKIPPED')),
+  attempts            INT NOT NULL DEFAULT 0,
+  provider_message_id TEXT,
+  error               TEXT,
+  scheduled_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at             TIMESTAMPTZ,
+  bounced_at          TIMESTAMPTZ,
+  complained_at       TIMESTAMPTZ,
+  first_clicked_at    TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, send_date)
+);
+ALTER TABLE email_send ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE generated_article ADD COLUMN IF NOT EXISTS send_id UUID REFERENCES email_send (id) ON DELETE SET NULL;
+
+-- -------------------------------------------------------------------------
 -- C7a: user_vocab_level was never written (the onboarding quiz computed the
 -- estimate and dropped it). The new backend stores it at onboarding. For
 -- readers who already onboarded, rebuild it from their seeded words: the quiz
@@ -356,7 +440,7 @@ SELECT check_name, ok FROM (
   -- B4
   UNION ALL
   SELECT 'B4 generated_article table exists with its columns',
-         (SELECT COUNT(*) = 33 FROM information_schema.columns
+         (SELECT COUNT(*) = 34 FROM information_schema.columns
            WHERE table_name = 'generated_article')
   UNION ALL
   SELECT 'B4 generated_article is deleted with the reader (user_id ON DELETE CASCADE)',
@@ -415,6 +499,31 @@ SELECT check_name, ok FROM (
   SELECT 'B4 generated_article has interest_id and annotations',
          (SELECT COUNT(*) = 2 FROM information_schema.columns
            WHERE table_name = 'generated_article' AND column_name IN ('interest_id', 'annotations'))
+  -- A1 / A6 / G2 / G3 / G8
+  UNION ALL
+  SELECT 'A1 reader_profile exists with its columns and is deleted with the reader',
+         (SELECT COUNT(*) = 17 FROM information_schema.columns WHERE table_name = 'reader_profile')
+         AND EXISTS (SELECT 1 FROM pg_constraint
+                      WHERE conrelid = 'reader_profile'::regclass AND contype = 'f'
+                        AND confrelid = 'app_user'::regclass AND confdeltype = 'c')
+  UNION ALL
+  SELECT 'A6 profile_suggestion exists with its columns and its unique index',
+         (SELECT COUNT(*) = 10 FROM information_schema.columns WHERE table_name = 'profile_suggestion')
+         AND EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'uq_profile_suggestion_area')
+  UNION ALL
+  SELECT 'G3 email_preference exists with its columns',
+         (SELECT COUNT(*) = 9 FROM information_schema.columns WHERE table_name = 'email_preference')
+  UNION ALL
+  SELECT 'G2 email_send exists with its columns and one send per reader and day',
+         (SELECT COUNT(*) = 14 FROM information_schema.columns WHERE table_name = 'email_send')
+         AND EXISTS (SELECT 1 FROM pg_constraint
+                      WHERE conrelid = 'email_send'::regclass AND contype = 'u')
+  UNION ALL
+  SELECT 'F1 app_user.time_zone and generated_article.send_id exist',
+         (SELECT COUNT(*) = 1 FROM information_schema.columns
+           WHERE table_name = 'app_user' AND column_name = 'time_zone')
+         AND (SELECT COUNT(*) = 1 FROM information_schema.columns
+               WHERE table_name = 'generated_article' AND column_name = 'send_id')
   -- C7a
   UNION ALL
   SELECT 'C7a every reader with onboarding-seeded words has a vocabulary estimate',
