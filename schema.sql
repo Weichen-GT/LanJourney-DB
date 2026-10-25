@@ -723,6 +723,26 @@ CREATE INDEX IF NOT EXISTS idx_generated_article_open
   WHERE status IN ('GENERATED', 'DELIVERED', 'OPENED');
 
 -- =========================
+-- 20) article_new_word: the words a reader pasted that are outside the ranked word list (no
+--     frequency_rank), one row per article and word, with what the rewrite did with it. Lets the
+--     weekly review count them and see which ones come up again and again.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS article_new_word (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    article_id UUID REFERENCES article (id) ON DELETE SET NULL,
+    vocab_id BIGINT NOT NULL REFERENCES vocabulary (id) ON DELETE CASCADE,
+    meaning_id BIGINT REFERENCES meaning (id) ON DELETE SET NULL,   -- set when the word was taught
+    outcome TEXT NOT NULL CHECK (outcome IN ('TAUGHT', 'REWRITTEN', 'NO_WORDNET_ENTRY', 'LEFT')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (article_id, vocab_id)
+  );
+
+CREATE INDEX IF NOT EXISTS idx_article_new_word_vocab ON article_new_word (vocab_id);
+CREATE INDEX IF NOT EXISTS idx_article_new_word_user ON article_new_word (user_id, created_at DESC);
+
+-- =========================
 -- Row Level Security
 -- =========================
 -- Supabase exposes every table in the public schema through its REST API. Enabling RLS with no

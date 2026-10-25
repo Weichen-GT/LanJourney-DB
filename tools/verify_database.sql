@@ -26,6 +26,8 @@ SELECT item, ok FROM (
          EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'ai_call_log')
   UNION ALL SELECT 'table generated_article (B4)',
          EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'generated_article')
+  UNION ALL SELECT 'table article_new_word',
+         EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'article_new_word')
   UNION ALL SELECT 'table article_topic (A5)',
          EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'article_topic')
   UNION ALL SELECT 'source CHECK allows REWRITE and GENERATED (P4)',
