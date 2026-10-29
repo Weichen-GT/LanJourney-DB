@@ -712,7 +712,8 @@ CREATE TABLE
     interest_id UUID REFERENCES reader_interest (id) ON DELETE SET NULL,  -- the interest node the article served (B8)
     annotations JSONB,                               -- the detected words of the final text, for the reader page and Complete (D10)
     send_id UUID REFERENCES email_send (id) ON DELETE SET NULL,   -- the email this article was sent in (G2)
-    article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- set on Complete (D10)
+    article_id UUID REFERENCES article (id) ON DELETE SET NULL,  -- set on Complete (D10)
+    origin TEXT NOT NULL DEFAULT 'SEND' CHECK (origin IN ('SEND', 'ON_DEMAND'))  -- SEND = written for an email send; ON_DEMAND = the reader pressed Discover
   );
 
 -- the reader's feed: newest first, by state
@@ -721,6 +722,28 @@ CREATE INDEX IF NOT EXISTS idx_generated_article_user ON generated_article (user
 CREATE INDEX IF NOT EXISTS idx_generated_article_open
   ON generated_article (status, generated_at)
   WHERE status IN ('GENERATED', 'DELIVERED', 'OPENED');
+
+-- =========================
+-- 20) article_request: one press of the Discover button on the For You page. The page asks for the
+--     result until the request is READY or FAILED. It is also the daily-limit ledger: the requests of
+--     the reader's local day (local_date) that are not FAILED are what the limit counts. Only one
+--     PENDING request per reader, so a double click cannot start two articles.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS article_request (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'READY', 'FAILED')),
+    generated_article_id UUID REFERENCES generated_article (id) ON DELETE SET NULL,
+    failure TEXT,                                    -- why a FAILED request failed (a short code, never reader text)
+    local_date DATE NOT NULL,                        -- the reader's local day when they asked
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMPTZ
+  );
+CREATE UNIQUE INDEX IF NOT EXISTS uq_article_request_one_pending
+  ON article_request (user_id) WHERE status = 'PENDING';
+CREATE INDEX IF NOT EXISTS idx_article_request_user_day ON article_request (user_id, local_date);
+CREATE INDEX IF NOT EXISTS idx_article_request_requested_at ON article_request (requested_at);
 
 -- =========================
 -- Row Level Security
