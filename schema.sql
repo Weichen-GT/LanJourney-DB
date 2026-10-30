@@ -16,6 +16,7 @@ CREATE TABLE
   IF NOT EXISTS app_user (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     display_name TEXT,
+    username TEXT,                            -- public handle, unique ignoring case (index below); "user-123456" until the user picks one
     email TEXT NOT NULL UNIQUE,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     -- backend-controlled "enum"
@@ -34,6 +35,7 @@ CREATE TABLE
     failed_login_attempts INT NOT NULL DEFAULT 0,
     locked_until TIMESTAMPTZ,
     avatar_url TEXT,
+    avatar_icon TEXT,                         -- key of the built-in icon the user picked (e.g. "cat"); NULL = none
     locale VARCHAR(35),
     time_zone TEXT,   -- IANA time zone of the reader, from the browser (G3)
     profile_completed BOOLEAN NOT NULL DEFAULT FALSE,
@@ -43,6 +45,9 @@ CREATE TABLE
     last_login_at TIMESTAMPTZ,
     CONSTRAINT uq_user_provider_identity UNIQUE (auth_provider, auth_provider_user_id)
   );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_app_user_username_lower
+  ON app_user (lower(username));
 
 CREATE OR REPLACE TRIGGER trg_app_user_updated_at
   BEFORE UPDATE ON app_user
