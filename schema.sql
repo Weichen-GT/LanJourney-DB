@@ -718,7 +718,8 @@ CREATE TABLE
     annotations JSONB,                               -- the detected words of the final text, for the reader page and Complete (D10)
     send_id UUID REFERENCES email_send (id) ON DELETE SET NULL,   -- the email this article was sent in (G2)
     article_id UUID REFERENCES article (id) ON DELETE SET NULL,  -- set on Complete (D10)
-    origin TEXT NOT NULL DEFAULT 'SEND' CHECK (origin IN ('SEND', 'ON_DEMAND'))  -- SEND = written for an email send; ON_DEMAND = the reader pressed Discover
+    origin TEXT NOT NULL DEFAULT 'SEND' CHECK (origin IN ('SEND', 'ON_DEMAND')),  -- SEND = written for an email send; ON_DEMAND = the reader pressed Discover
+    style TEXT                                       -- the style it was written in (ArticleStyle name: STORY_TWIST, MYTH_FACT, ...); NULL before style cards
   );
 
 -- the reader's feed: newest first, by state
