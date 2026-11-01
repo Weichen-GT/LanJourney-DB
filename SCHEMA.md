@@ -232,8 +232,9 @@ meanings (one vocabulary word can have multiple senses)
 | `part_of_speech` | text | yes |  |  |
 | `example_sentence` | text | yes |  |  |
 | `example_sentence_zh` | text | yes |  | Chinese translation of example_sentence |
-| `rank` | integer | no | 1 | 1 = most common sense, higher = more obscure |
+| `rank` | integer | no | 1 | 1 = most used sense of this word, higher = more obscure |
 | `created_at` | timestamp with time zone | no | now() |  |
+| `use_count` | integer | yes |  | WordNet (SemCor) count of this word used in this sense; NULL when unknown |
 
 **Constraints**
 

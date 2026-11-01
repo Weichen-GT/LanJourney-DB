@@ -143,8 +143,11 @@ CREATE TABLE
     part_of_speech TEXT,
     example_sentence TEXT,
     example_sentence_zh TEXT,       -- Chinese translation of example_sentence
-    rank INT NOT NULL DEFAULT 1 CHECK (rank > 0),   -- 1 = most common sense, higher = more obscure
+    -- rank follows use_count within the word, across parts of speech (updates/2026-10-31_sense_order_by_use.sql);
+    -- a word with any uncounted meaning keeps its old order.
+    rank INT NOT NULL DEFAULT 1 CHECK (rank > 0),   -- 1 = most used sense of this word, higher = more obscure
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    use_count INT,                  -- WordNet (SemCor) count of this word used in this sense; NULL when unknown
     CONSTRAINT uq_meaning_vocab_sense UNIQUE (vocab_id, sense_key),
     CONSTRAINT chk_sense_key_format CHECK (sense_key ~ '^[a-z0-9_]+$'),
     CONSTRAINT chk_wordnet_sense_id_format CHECK (wordnet_sense_id IS NULL OR wordnet_sense_id ~ '^[nvasr]#[0-9]+$')
