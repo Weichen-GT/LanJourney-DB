@@ -844,6 +844,7 @@ an article written for a reader (design doc B4). Drafts live here; an article ro
 | `send_id` | uuid | yes |  | FK -> `email_send` (on delete set null); the email this article was sent in (G2) |
 | `article_id` | uuid | yes |  | FK -> `article` (on delete set null); set on Complete (D10) |
 | `origin` | text | no | 'SEND'::text | SEND = written for an email send; ON_DEMAND = the reader pressed Discover |
+| `style` | text | yes |  | the style it was written in (ArticleStyle name: STORY_TWIST, MYTH_FACT, ...); NULL before style cards |
 
 **Constraints**
 
