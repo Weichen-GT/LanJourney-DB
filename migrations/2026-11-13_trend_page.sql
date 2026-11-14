@@ -53,6 +53,30 @@ ALTER TABLE trend_story ENABLE ROW LEVEL SECURITY;
 ALTER TABLE article_request
   ADD COLUMN IF NOT EXISTS trend_story_id UUID REFERENCES trend_story (id) ON DELETE SET NULL;
 
+-- -------------------------------------------------------------------------
+-- trend_article -- the shared pool: one master article per story, written the first time any
+-- reader clicks the story (from the story's brief, checked against its facts) and reused for every
+-- later reader, whose copy is a rewrite of this text to their own words. It holds no reader data.
+-- Deleted with its story.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS trend_article (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trend_story_id UUID NOT NULL UNIQUE REFERENCES trend_story (id) ON DELETE CASCADE,
+  title          TEXT NOT NULL,
+  content        TEXT NOT NULL,
+  word_count     INT NOT NULL,
+  report         JSONB,                              -- tries, checks and the editor's scores
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE trend_article ENABLE ROW LEVEL SECURITY;
+
+-- -------------------------------------------------------------------------
+-- article_request.rewritten_article_id -- a Trend request ends in a rewrite of the pool article
+-- for the reader: an ordinary saved article (article), not a generated_article.
+-- -------------------------------------------------------------------------
+ALTER TABLE article_request
+  ADD COLUMN IF NOT EXISTS rewritten_article_id UUID REFERENCES article (id) ON DELETE SET NULL;
+
 COMMIT;
 
 
@@ -74,10 +98,20 @@ SELECT 'article_request.trend_story_id exists',
                 WHERE table_schema = 'public' AND table_name = 'article_request'
                   AND column_name = 'trend_story_id')
 UNION ALL
+SELECT 'trend_article table exists with RLS on',
+       COALESCE((SELECT relrowsecurity FROM pg_class WHERE oid = to_regclass('public.trend_article')), false)
+UNION ALL
+SELECT 'article_request.rewritten_article_id exists',
+       EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'article_request'
+                  AND column_name = 'rewritten_article_id')
+UNION ALL
 SELECT 'one story per day, category and rank (unique constraint)',
        EXISTS (SELECT 1 FROM pg_constraint
                 WHERE conrelid = to_regclass('public.trend_story') AND contype = 'u');
 
 -- Rollback (only if nothing reads the feature yet):
+--   ALTER TABLE article_request DROP COLUMN IF EXISTS rewritten_article_id;
 --   ALTER TABLE article_request DROP COLUMN IF EXISTS trend_story_id;
+--   DROP TABLE IF EXISTS trend_article;
 --   DROP TABLE IF EXISTS trend_story;

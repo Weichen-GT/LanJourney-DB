@@ -758,6 +758,19 @@ CREATE TABLE
   );
 CREATE INDEX IF NOT EXISTS idx_trend_story_date ON trend_story (story_date DESC, category, rank);
 
+-- trend_article: the shared pool. One master article per story, written the first time any reader clicks
+--     the story and reused for every later reader, whose copy is a rewrite of it to their own words.
+CREATE TABLE
+  IF NOT EXISTS trend_article (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trend_story_id UUID NOT NULL UNIQUE REFERENCES trend_story (id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    word_count INT NOT NULL,
+    report JSONB,                                    -- tries, checks and the editor's scores
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
 CREATE TABLE
   IF NOT EXISTS article_request (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -768,7 +781,8 @@ CREATE TABLE
     local_date DATE NOT NULL,                        -- the reader's local day when they asked
     requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     finished_at TIMESTAMPTZ,
-    trend_story_id UUID REFERENCES trend_story (id) ON DELETE SET NULL  -- set when the request came from a Trend click
+    trend_story_id UUID REFERENCES trend_story (id) ON DELETE SET NULL,  -- set when the request came from a Trend click
+    rewritten_article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- a Trend request ends in a saved rewrite
   );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_article_request_one_pending
   ON article_request (user_id) WHERE status = 'PENDING';
