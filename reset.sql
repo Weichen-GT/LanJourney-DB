@@ -2,7 +2,7 @@
 -- RESET: DELETES EVERYTHING, then rebuilds the empty schema.
 -- GENERATED from schema.sql by tools/build_reset.py -- do not edit by hand.
 --
--- !! This drops all 31 tables with all their data (users, articles, progress, vocabulary).
+-- !! This drops all 33 tables with all their data (users, articles, progress, vocabulary).
 -- !! Only run it on a database you are happy to wipe (local dev, or an empty scratch project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
@@ -12,6 +12,8 @@
 
 DROP TABLE IF EXISTS article_new_word CASCADE;
 DROP TABLE IF EXISTS article_request CASCADE;
+DROP TABLE IF EXISTS trend_article CASCADE;
+DROP TABLE IF EXISTS trend_story CASCADE;
 DROP TABLE IF EXISTS generated_article CASCADE;
 DROP TABLE IF EXISTS email_send CASCADE;
 DROP TABLE IF EXISTS email_preference CASCADE;
@@ -787,6 +789,39 @@ CREATE INDEX IF NOT EXISTS idx_generated_article_open
 --     the reader's local day (local_date) that are not FAILED are what the limit counts. Only one
 --     PENDING request per reader, so a double click cannot start two articles.
 -- =========================
+-- trend_story: one listed trend story, shared by every reader (Trend page). The brief is the list of
+--     verified facts (our own words, each tagged with its source) an article is written from.
+CREATE TABLE
+  IF NOT EXISTS trend_story (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    story_date DATE NOT NULL,                        -- the UTC day the story was listed for
+    category TEXT NOT NULL CHECK (category IN ('WORLD', 'BUSINESS', 'TECH', 'SCIENCE_HEALTH')),
+    rank SMALLINT NOT NULL CHECK (rank BETWEEN 1 AND 5),
+    title TEXT NOT NULL,
+    teaser TEXT,                                     -- one line shown on the page
+    lane TEXT NOT NULL CHECK (lane IN ('NEWS', 'KNOWLEDGE')),
+    brief JSONB NOT NULL,                            -- the SourceBrief the article is written from
+    source_count INT NOT NULL,                       -- how many different sources the brief rests on
+    signal JSONB,                                    -- what made it a trend: domains, links, counts
+    status TEXT NOT NULL DEFAULT 'LISTED' CHECK (status IN ('LISTED', 'RETIRED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (story_date, category, rank)
+  );
+CREATE INDEX IF NOT EXISTS idx_trend_story_date ON trend_story (story_date DESC, category, rank);
+
+-- trend_article: the shared pool. One master article per story, written the first time any reader clicks
+--     the story and reused for every later reader, whose copy is a rewrite of it to their own words.
+CREATE TABLE
+  IF NOT EXISTS trend_article (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trend_story_id UUID NOT NULL UNIQUE REFERENCES trend_story (id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    word_count INT NOT NULL,
+    report JSONB,                                    -- tries, checks and the editor's scores
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
 CREATE TABLE
   IF NOT EXISTS article_request (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -796,7 +831,9 @@ CREATE TABLE
     failure TEXT,                                    -- why a FAILED request failed (a short code, never reader text)
     local_date DATE NOT NULL,                        -- the reader's local day when they asked
     requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    finished_at TIMESTAMPTZ
+    finished_at TIMESTAMPTZ,
+    trend_story_id UUID REFERENCES trend_story (id) ON DELETE SET NULL,  -- set when the request came from a Trend click
+    rewritten_article_id UUID REFERENCES article (id) ON DELETE SET NULL  -- a Trend request ends in a saved rewrite
   );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_article_request_one_pending
   ON article_request (user_id) WHERE status = 'PENDING';
