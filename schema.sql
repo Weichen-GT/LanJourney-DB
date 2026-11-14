@@ -738,6 +738,26 @@ CREATE INDEX IF NOT EXISTS idx_generated_article_open
 --     the reader's local day (local_date) that are not FAILED are what the limit counts. Only one
 --     PENDING request per reader, so a double click cannot start two articles.
 -- =========================
+-- trend_story: one listed trend story, shared by every reader (Trend page). The brief is the list of
+--     verified facts (our own words, each tagged with its source) an article is written from.
+CREATE TABLE
+  IF NOT EXISTS trend_story (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    story_date DATE NOT NULL,                        -- the UTC day the story was listed for
+    category TEXT NOT NULL CHECK (category IN ('WORLD', 'BUSINESS', 'TECH', 'SCIENCE_HEALTH')),
+    rank SMALLINT NOT NULL CHECK (rank BETWEEN 1 AND 5),
+    title TEXT NOT NULL,
+    teaser TEXT,                                     -- one line shown on the page
+    lane TEXT NOT NULL CHECK (lane IN ('NEWS', 'KNOWLEDGE')),
+    brief JSONB NOT NULL,                            -- the SourceBrief the article is written from
+    source_count INT NOT NULL,                       -- how many different sources the brief rests on
+    signal JSONB,                                    -- what made it a trend: domains, links, counts
+    status TEXT NOT NULL DEFAULT 'LISTED' CHECK (status IN ('LISTED', 'RETIRED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (story_date, category, rank)
+  );
+CREATE INDEX IF NOT EXISTS idx_trend_story_date ON trend_story (story_date DESC, category, rank);
+
 CREATE TABLE
   IF NOT EXISTS article_request (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -747,7 +767,8 @@ CREATE TABLE
     failure TEXT,                                    -- why a FAILED request failed (a short code, never reader text)
     local_date DATE NOT NULL,                        -- the reader's local day when they asked
     requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    finished_at TIMESTAMPTZ
+    finished_at TIMESTAMPTZ,
+    trend_story_id UUID REFERENCES trend_story (id) ON DELETE SET NULL  -- set when the request came from a Trend click
   );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_article_request_one_pending
   ON article_request (user_id) WHERE status = 'PENDING';
