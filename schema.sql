@@ -810,6 +810,23 @@ CREATE INDEX IF NOT EXISTS idx_article_new_word_vocab ON article_new_word (vocab
 CREATE INDEX IF NOT EXISTS idx_article_new_word_user ON article_new_word (user_id, created_at DESC);
 
 -- =========================
+-- 22) article_term: the names, titles and hard words in a saved article, with a short plain note
+--     ("L3Harris": "US defence and technology company"). The sidebar lists them apart from the words
+--     to learn; they are never taught or reviewed. Written for Trend articles (the brief knows them).
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS article_term (
+    id BIGSERIAL PRIMARY KEY,
+    article_id UUID NOT NULL REFERENCES article (id) ON DELETE CASCADE,
+    term TEXT NOT NULL,                       -- as written in the article
+    kind TEXT NOT NULL CHECK (kind IN ('NAME', 'TITLE', 'TERM')),
+    note TEXT,                                -- a few plain words; may be empty
+    position INT NOT NULL DEFAULT 0           -- order of first appearance
+  );
+
+CREATE INDEX IF NOT EXISTS idx_article_term_article ON article_term (article_id, position);
+
+-- =========================
 -- Row Level Security
 -- =========================
 -- Supabase exposes every table in the public schema through its REST API. Enabling RLS with no
