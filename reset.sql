@@ -454,6 +454,7 @@ CREATE TABLE
     -- TILES/TYPED: the exact word form in the sentence; WHICH_MEANING: the correct meaning id
     answer TEXT NOT NULL,
     options TEXT,                    -- JSON array of {"id","label"}: the tiles (TILES) or the word's meanings (WHICH_MEANING); NULL for TYPED
+    extended_sentence TEXT,          -- TYPED only: the sentence with more context around it, shown by the "More context" hint; NULL when there is none
     user_answer TEXT,
     result TEXT CHECK (result IN ('RIGHT', 'ALMOST', 'WRONG')),
     status_before INT,

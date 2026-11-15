@@ -490,6 +490,7 @@ one Quick Test question
 | `sentence` | text | no |  |  |
 | `answer` | text | no |  |  |
 | `options` | text | yes |  | JSON array of {"id","label"}: the tiles (TILES) or the word's meanings (WHICH_MEANING); NULL for TYPED |
+| `extended_sentence` | text | yes |  | TYPED only: the sentence with more context around it, shown by the "More context" hint; NULL when there is none |
 | `user_answer` | text | yes |  |  |
 | `result` | text | yes |  |  |
 | `status_before` | integer | yes |  |  |
