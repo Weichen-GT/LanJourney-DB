@@ -459,6 +459,7 @@ CREATE TABLE
     answer TEXT NOT NULL,
     options TEXT,                    -- JSON array of {"id","label"}: the tiles (TILES) or the word's meanings (WHICH_MEANING); NULL for TYPED
     extended_sentence TEXT,          -- TYPED only: the sentence with more context around it, shown by the "More context" hint; NULL when there is none
+    other_fits TEXT,                 -- TYPED only: JSON array of other words the AI said also fit the blank (typed answers matching one count as right, level unchanged); NULL when there are none
     user_answer TEXT,
     result TEXT CHECK (result IN ('RIGHT', 'ALMOST', 'WRONG')),
     status_before INT,
