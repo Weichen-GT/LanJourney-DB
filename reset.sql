@@ -176,6 +176,8 @@ CREATE TABLE
     user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
     article_id UUID NOT NULL REFERENCES article (id) ON DELETE CASCADE,
     saved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- The default covers writers that save and finish in one step.
+    completed_at TIMESTAMPTZ DEFAULT NOW(), -- when the reader pressed Complete Reading; NULL while unfinished (the words reach their list only then)
     PRIMARY KEY (user_id, article_id)
   );
 
@@ -274,6 +276,7 @@ CREATE TABLE
     meaning_id BIGINT NOT NULL REFERENCES meaning  (id) ON DELETE CASCADE,
     -- the sentence where the article used this meaning (taught meanings only); Quick Test asks it
     sentence TEXT,
+    role TEXT NOT NULL DEFAULT 'TAUGHT' CHECK (role IN ('TAUGHT', 'SEEN')), -- TAUGHT: becomes New on Complete; SEEN: a word the reader has, used again (counts as seen again on Complete)
     PRIMARY KEY (article_id, meaning_id)
   );
 

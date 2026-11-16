@@ -229,6 +229,7 @@ user <-> article relation
 | `user_id` | uuid | no |  | PK; FK -> `app_user` (on delete cascade) |
 | `article_id` | uuid | no |  | PK; FK -> `article` (on delete cascade) |
 | `saved_at` | timestamp with time zone | no | now() |  |
+| `completed_at` | timestamp with time zone | yes | now() | when the reader pressed Complete Reading; NULL while unfinished (the words reach their list only then) |
 
 **Constraints**
 
@@ -328,9 +329,11 @@ article <-> meaning relation
 | `article_id` | uuid | no |  | PK; FK -> `article` (on delete cascade) |
 | `meaning_id` | bigint | no |  | PK; FK -> `meaning` (on delete cascade) |
 | `sentence` | text | yes |  |  |
+| `role` | text | no | 'TAUGHT'::text | TAUGHT: becomes New on Complete; SEEN: a word the reader has, used again (counts as seen again on Complete) |
 
 **Constraints**
 
+- `article_meaning_role_check` (check): `CHECK ((role = ANY (ARRAY['TAUGHT'::text, 'SEEN'::text])))`
 - `article_meaning_pkey` (primary key): `PRIMARY KEY (article_id, meaning_id)`
 
 **Indexes**
