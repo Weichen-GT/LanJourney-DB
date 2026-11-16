@@ -126,11 +126,14 @@ CREATE TABLE
     saved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- The default covers writers that save and finish in one step.
     completed_at TIMESTAMPTZ DEFAULT NOW(), -- when the reader pressed Complete Reading; NULL while unfinished (the words reach their list only then)
+    last_opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- when the reader last opened it (its save time until the first open); orders Recent Articles
     PRIMARY KEY (user_id, article_id)
   );
 
 -- Allows reverse lookup: which users saved a given article?
 CREATE INDEX IF NOT EXISTS idx_user_article_article_id ON user_article (article_id);
+-- Recent Articles: the reader's articles, last opened first
+CREATE INDEX IF NOT EXISTS idx_user_article_user_last_opened ON user_article (user_id, last_opened_at DESC);
 
 -- =========================
 -- 5) meanings (one vocabulary word can have multiple senses)
@@ -724,6 +727,7 @@ CREATE TABLE
     generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     delivered_at TIMESTAMPTZ,
     first_opened_at TIMESTAMPTZ,
+    last_opened_at TIMESTAMPTZ,                      -- every open moves it; an opened, unfinished article is listed in Recent Articles by it
     completed_at TIMESTAMPTZ,
     expired_at TIMESTAMPTZ,
     hidden_at TIMESTAMPTZ,

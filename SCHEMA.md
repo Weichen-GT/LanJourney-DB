@@ -230,6 +230,7 @@ user <-> article relation
 | `article_id` | uuid | no |  | PK; FK -> `article` (on delete cascade) |
 | `saved_at` | timestamp with time zone | no | now() |  |
 | `completed_at` | timestamp with time zone | yes | now() | when the reader pressed Complete Reading; NULL while unfinished (the words reach their list only then) |
+| `last_opened_at` | timestamp with time zone | no | now() | when the reader last opened it (its save time until the first open); orders Recent Articles |
 
 **Constraints**
 
@@ -238,6 +239,7 @@ user <-> article relation
 **Indexes**
 
 - `idx_user_article_article_id`: `index on user_article USING btree (article_id)`
+- `idx_user_article_user_last_opened`: `index on user_article USING btree (user_id, last_opened_at DESC)`
 
 ## meaning
 
@@ -853,6 +855,7 @@ an article written for a reader (design doc B4). Drafts live here; an article ro
 | `generated_at` | timestamp with time zone | no | now() |  |
 | `delivered_at` | timestamp with time zone | yes |  |  |
 | `first_opened_at` | timestamp with time zone | yes |  |  |
+| `last_opened_at` | timestamp with time zone | yes |  | every open moves it; an opened, unfinished article is listed in Recent Articles by it |
 | `completed_at` | timestamp with time zone | yes |  |  |
 | `expired_at` | timestamp with time zone | yes |  |  |
 | `hidden_at` | timestamp with time zone | yes |  |  |
