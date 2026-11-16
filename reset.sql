@@ -554,9 +554,10 @@ CREATE INDEX IF NOT EXISTS idx_conversation_target_user_meaning
   ON conversation_target (user_id, meaning_id, finished_at DESC);
 
 -- =========================
--- 18) ai_call_log: one row per AI call of article generation (D9). The numbers are kept; the request and
---     response text is set to NULL after about 30 days. A call whose prompt holds a reader's pasted
---     article (or profile text) is logged with no text at all.
+-- 18) ai_call_log: one row per AI call the app makes (D9, then every call since the AI cost log), with
+--     its tokens and cost and the reader action that caused it. The numbers are kept; the request and
+--     response text is set to NULL after about 30 days, and a call whose prompt holds a reader's own
+--     text (a pasted article, profile answers, conversation messages) is logged with no text at all.
 -- =========================
 CREATE TABLE
   IF NOT EXISTS ai_call_log (
@@ -565,7 +566,10 @@ CREATE TABLE
     generated_article_id UUID,       -- the draft this call served; the key to generated_article is added with that table (B4)
     purpose TEXT NOT NULL CHECK (purpose IN ('GENERATE', 'REGENERATE', 'SENSE_CONFIRM', 'SENTENCE_REPAIR', 'JUDGE',
                                              'SAFETY', 'INTEREST_LABEL', 'SUBAREA_PROPOSAL', 'PROFILE_EXTRACTION',
-                                             'REWRITE_SELECT', 'SCENARIO_BANK')),
+                                             'REWRITE_SELECT', 'SCENARIO_BANK', 'REWRITE', 'WORD_EXPLAIN',
+                                             'QUIZ_BUILD', 'PROFANITY_CHECK', 'CONVERSATION_REPLY',
+                                             'CONVERSATION_GRADE', 'CONVERSATION_SCENARIO', 'CONVERSATION_SAMPLE',
+                                             'OTHER')),
     attempt INT NOT NULL DEFAULT 1,  -- the try within one request (1 = first)
     model TEXT NOT NULL,
     prompt_version TEXT,             -- e.g. gen-v2
@@ -580,13 +584,17 @@ CREATE TABLE
     status TEXT NOT NULL CHECK (status IN ('OK', 'ERROR', 'RETRY', 'SCHEMA_FAIL')),
     error TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    text_purged_at TIMESTAMPTZ       -- when the text was removed
+    text_purged_at TIMESTAMPTZ,      -- when the text was removed
+    behavior TEXT,                   -- what started the call: 'POST /api/v1/articles/rewrite/v3' for a request, 'job: nightly generation' for a job
+    action_id UUID                   -- one id per reader action, shared by every call it made
   );
 
 -- the nightly text purge and the dashboard's time ranges
 CREATE INDEX IF NOT EXISTS idx_ai_call_log_created_at ON ai_call_log (created_at);
 -- a reader's calls (account view, per-reader cost)
 CREATE INDEX IF NOT EXISTS idx_ai_call_log_user ON ai_call_log (user_id, created_at DESC);
+-- the cost report: a time range grouped by behavior
+CREATE INDEX IF NOT EXISTS idx_ai_call_log_behavior ON ai_call_log (behavior, created_at);
 
 -- =========================
 -- 18b) scenario_bank (global, no personal data) and reader_scene_use (B1): everyday scenes for each topic or

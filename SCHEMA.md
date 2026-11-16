@@ -29,7 +29,7 @@
 | [`meaning_review`](#meaning_review) | the review log — every review of a user's meaning, and every level set by hand, with the status before and after. The reading gates (4→5, 8→9) are counted from it. |
 | [`conversation_message`](#conversation_message) | every message of a Conversation. The text (and the grader's answer, which quotes it) is set to NULL after 30 days; the verdict and scores stay for analysis. |
 | [`conversation_target`](#conversation_target) | one word meaning tested in a Conversation, and how it went |
-| [`ai_call_log`](#ai_call_log) | one row per AI call of article generation (D9). The numbers are kept; the request and response text is set to NULL after about 30 days. A call whose prompt holds a reader's pasted article (or profile text) is logged with no text at all. |
+| [`ai_call_log`](#ai_call_log) | one row per AI call the app makes (D9, then every call since the AI cost log), with its tokens and cost and the reader action that caused it. The numbers are kept; the request and response text is set to NULL after about 30 days, and a call whose prompt holds a reader's own text (a pasted article, profile answers, conversation messages) is logged with no text at all. |
 | [`scenario_bank`](#scenario_bank) | scenario_bank (global, no personal data) and reader_scene_use (B1): everyday scenes for each topic or interest label, written once by a model and reused for everyone. A reader's own use and blocks live in reader_scene_use, so one reader's "not for me" never changes the shared bank. |
 | [`reader_scene_use`](#reader_scene_use) |  |
 | [`reader_interest`](#reader_interest) | reader_interest (B12): the reader's interest tree. Level 1 = interest area ("computer science"), level 2 = sub-area ("machine learning", later). The score is computed from the evidence counts and last_engaged_at (so the weights can change without a migration). |
@@ -617,7 +617,7 @@ one word meaning tested in a Conversation, and how it went
 
 ## ai_call_log
 
-one row per AI call of article generation (D9). The numbers are kept; the request and response text is set to NULL after about 30 days. A call whose prompt holds a reader's pasted article (or profile text) is logged with no text at all.
+one row per AI call the app makes (D9, then every call since the AI cost log), with its tokens and cost and the reader action that caused it. The numbers are kept; the request and response text is set to NULL after about 30 days, and a call whose prompt holds a reader's own text (a pasted article, profile answers, conversation messages) is logged with no text at all.
 
 | Column | Type | Null | Default | Notes |
 |---|---|---|---|---|
@@ -640,14 +640,17 @@ one row per AI call of article generation (D9). The numbers are kept; the reques
 | `error` | text | yes |  |  |
 | `created_at` | timestamp with time zone | no | now() |  |
 | `text_purged_at` | timestamp with time zone | yes |  | when the text was removed |
+| `behavior` | text | yes |  | what started the call: 'POST /api/v1/articles/rewrite/v3' for a request, 'job: nightly generation' for a job |
+| `action_id` | uuid | yes |  | one id per reader action, shared by every call it made |
 
 **Constraints**
 
-- `ai_call_log_purpose_check` (check): `CHECK ((purpose = ANY (ARRAY['GENERATE'::text, 'REGENERATE'::text, 'SENSE_CONFIRM'::text, 'SENTENCE_REPAIR'::text, 'JUDGE'::text, 'SAFETY'::text, 'INTEREST_LABEL'::text, 'SUBAREA_PROPOSAL'::text, 'PROFILE_EXTRACTION'::text, 'REWRITE_SELECT'::text, 'SCENARIO_BANK'::text])))`
+- `ai_call_log_purpose_check` (check): `CHECK ((purpose = ANY (ARRAY['GENERATE'::text, 'REGENERATE'::text, 'SENSE_CONFIRM'::text, 'SENTENCE_REPAIR'::text, 'JUDGE'::text, 'SAFETY'::text, 'INTEREST_LABEL'::text, 'SUBAREA_PROPOSAL'::text, 'PROFILE_EXTRACTION'::text, 'REWRITE_SELECT'::text, 'SCENARIO_BANK'::text, 'REWRITE'::text, 'WORD_EXPLAIN'::text, 'QUIZ_BUILD'::text, 'PROFANITY_CHECK'::text, 'CONVERSATION_REPLY'::text, 'CONVERSATION_GRADE'::text, 'CONVERSATION_SCENARIO'::text, 'CONVERSATION_SAMPLE'::text, 'OTHER'::text])))`
 - `ai_call_log_status_check` (check): `CHECK ((status = ANY (ARRAY['OK'::text, 'ERROR'::text, 'RETRY'::text, 'SCHEMA_FAIL'::text])))`
 
 **Indexes**
 
+- `idx_ai_call_log_behavior`: `index on ai_call_log USING btree (behavior, created_at)`
 - `idx_ai_call_log_created_at`: `index on ai_call_log USING btree (created_at)`
 - `idx_ai_call_log_user`: `index on ai_call_log USING btree (user_id, created_at DESC)`
 
