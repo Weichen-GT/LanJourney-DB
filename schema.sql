@@ -761,7 +761,7 @@ CREATE TABLE
   IF NOT EXISTS trend_story (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     story_date DATE NOT NULL,                        -- the UTC day the story was listed for
-    category TEXT NOT NULL CHECK (category IN ('WORLD', 'BUSINESS', 'TECH', 'SCIENCE_HEALTH')),
+    category TEXT NOT NULL CHECK (category IN ('WORLD', 'POLITICS', 'BUSINESS', 'TECH', 'SCIENCE_HEALTH')), -- POLITICS is built only while the trend.politics switch (app_switch) is on
     rank SMALLINT NOT NULL CHECK (rank BETWEEN 1 AND 5),
     title TEXT NOT NULL,
     teaser TEXT,                                     -- one line shown on the page
@@ -842,6 +842,19 @@ CREATE TABLE
   );
 
 CREATE INDEX IF NOT EXISTS idx_article_term_article ON article_term (article_id, position);
+
+-- =========================
+-- 23) app_switch: on/off switches that hold for every reader, changed from the app itself (not from
+--     the hosting settings). A missing row means off. trend.politics: the Trend build lists political
+--     news under its own Politics category, and the page shows it.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS app_switch (
+    name TEXT PRIMARY KEY,                    -- e.g. 'trend.politics'
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- when it was last switched
+    changed_by UUID REFERENCES app_user (id) ON DELETE SET NULL -- the reader who switched it last
+  );
 
 -- =========================
 -- Row Level Security

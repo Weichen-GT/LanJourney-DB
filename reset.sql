@@ -2,7 +2,7 @@
 -- RESET: DELETES EVERYTHING, then rebuilds the empty schema.
 -- GENERATED from schema.sql by tools/build_reset.py -- do not edit by hand.
 --
--- !! This drops all 34 tables with all their data (users, articles, progress, vocabulary).
+-- !! This drops all 35 tables with all their data (users, articles, progress, vocabulary).
 -- !! Only run it on a database you are happy to wipe (local dev, or an empty scratch project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
@@ -10,6 +10,7 @@
 -- Runs as one script in the Supabase SQL editor or psql (no BEGIN/COMMIT: the editor runs statements separately).
 -- =============================================================
 
+DROP TABLE IF EXISTS app_switch CASCADE;
 DROP TABLE IF EXISTS article_term CASCADE;
 DROP TABLE IF EXISTS article_new_word CASCADE;
 DROP TABLE IF EXISTS article_request CASCADE;
@@ -813,7 +814,7 @@ CREATE TABLE
   IF NOT EXISTS trend_story (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     story_date DATE NOT NULL,                        -- the UTC day the story was listed for
-    category TEXT NOT NULL CHECK (category IN ('WORLD', 'BUSINESS', 'TECH', 'SCIENCE_HEALTH')),
+    category TEXT NOT NULL CHECK (category IN ('WORLD', 'POLITICS', 'BUSINESS', 'TECH', 'SCIENCE_HEALTH')), -- POLITICS is built only while the trend.politics switch (app_switch) is on
     rank SMALLINT NOT NULL CHECK (rank BETWEEN 1 AND 5),
     title TEXT NOT NULL,
     teaser TEXT,                                     -- one line shown on the page
@@ -894,6 +895,19 @@ CREATE TABLE
   );
 
 CREATE INDEX IF NOT EXISTS idx_article_term_article ON article_term (article_id, position);
+
+-- =========================
+-- 23) app_switch: on/off switches that hold for every reader, changed from the app itself (not from
+--     the hosting settings). A missing row means off. trend.politics: the Trend build lists political
+--     news under its own Politics category, and the page shows it.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS app_switch (
+    name TEXT PRIMARY KEY,                    -- e.g. 'trend.politics'
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- when it was last switched
+    changed_by UUID REFERENCES app_user (id) ON DELETE SET NULL -- the reader who switched it last
+  );
 
 -- =========================
 -- Row Level Security
