@@ -399,6 +399,31 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_quiz_session_user_started ON quiz_session (user_id, started_at DESC);
 
 -- =========================
+-- 14a) quiz_question: the Quick Test question pool. A question the AI writes is saved here with the
+--      reasons shown after a wrong answer, and reused for the next reader it fits.
+--      owner_user_id NULL = shared; set = the sentence came from that reader's own article, only for them.
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS quiz_question (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    meaning_id BIGINT NOT NULL REFERENCES meaning (id) ON DELETE CASCADE,
+    type TEXT NOT NULL CHECK (type IN ('TILES', 'TYPED', 'WHICH_MEANING')),
+    owner_user_id UUID REFERENCES app_user (id) ON DELETE CASCADE,
+    sentence TEXT NOT NULL,
+    answer_form TEXT NOT NULL,       -- the word exactly as it appears in the sentence
+    extended_sentence TEXT,          -- "More context" sentence; NULL when none
+    other_fits TEXT,                 -- TYPED only: JSON array of other words that also fit the blank
+    why_right TEXT,                  -- one short line: why the right answer fits
+    wrong_options TEXT,              -- TILES/WHICH_MEANING: JSON array of {"id","why"} (id = word or meaning id); NULL for TYPED
+    too_close TEXT,                  -- WHICH_MEANING only: JSON array of meaning ids too close to offer
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    retired_at TIMESTAMPTZ           -- set to stop using a bad question
+  );
+
+CREATE INDEX IF NOT EXISTS idx_quiz_question_meaning_type
+  ON quiz_question (meaning_id, type) WHERE retired_at IS NULL;
+
+-- =========================
 -- 14) quiz_item: one Quick Test question
 -- =========================
 CREATE TABLE
@@ -418,10 +443,12 @@ CREATE TABLE
     result TEXT CHECK (result IN ('RIGHT', 'ALMOST', 'WRONG')),
     status_before INT,
     status_after INT,
-    answered_at TIMESTAMPTZ
+    answered_at TIMESTAMPTZ,
+    question_id UUID REFERENCES quiz_question (id) ON DELETE SET NULL  -- the pool question it was made from; NULL before the pool
   );
 
 CREATE INDEX IF NOT EXISTS idx_quiz_item_session_id ON quiz_item (session_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_item_question_id ON quiz_item (question_id);
 
 -- =========================
 -- 15) meaning_review: the review log — every review of a user's meaning, and every level set by
