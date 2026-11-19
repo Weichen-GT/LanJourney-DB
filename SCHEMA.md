@@ -144,12 +144,14 @@ users
 | `time_zone` | text | yes |  | IANA time zone of the reader, from the browser (G3) |
 | `profile_completed` | boolean | no | false |  |
 | `onboarding_quiz` | boolean | no | false |  |
+| `trend_daily_limit` | integer | no | 3 | Trend articles this reader may start per local day; set by hand per reader |
 | `created_at` | timestamp with time zone | no | now() |  |
 | `updated_at` | timestamp with time zone | no | now() |  |
 | `last_login_at` | timestamp with time zone | yes |  |  |
 
 **Constraints**
 
+- `app_user_trend_daily_limit_check` (check): `CHECK ((trend_daily_limit >= 0))`
 - `app_user_email_key` (unique): `UNIQUE (email)`
 - `uq_user_provider_identity` (unique): `UNIQUE (auth_provider, auth_provider_user_id)`
 

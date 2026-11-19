@@ -95,6 +95,7 @@ CREATE TABLE
     time_zone TEXT,   -- IANA time zone of the reader, from the browser (G3)
     profile_completed BOOLEAN NOT NULL DEFAULT FALSE,
     onboarding_quiz BOOLEAN NOT NULL DEFAULT FALSE,
+    trend_daily_limit INT NOT NULL DEFAULT 3 CHECK (trend_daily_limit >= 0), -- Trend articles this reader may start per local day; set by hand per reader
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_login_at TIMESTAMPTZ,
