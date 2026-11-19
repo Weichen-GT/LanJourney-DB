@@ -267,6 +267,9 @@ meanings (one vocabulary word can have multiple senses)
 | `rank` | integer | no | 1 | 1 = most used sense of this word, higher = more obscure |
 | `created_at` | timestamp with time zone | no | now() |  |
 | `use_count` | integer | yes |  | WordNet (SemCor) count of this word used in this sense; NULL when unknown |
+| `second_example` | text | yes |  | another example sentence, different from example_sentence |
+| `phrases` | jsonb | yes |  | common phrases with this meaning, e.g. ["defense mechanism"]; [] when none |
+| `extras_filled_at` | timestamp with time zone | yes |  | when the AI wrote the extras; NULL = not asked yet |
 
 **Constraints**
 
