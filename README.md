@@ -15,9 +15,8 @@ Everything about the LanJourney PostgreSQL database (Supabase in prod, Docker lo
 
 ## Pending on prod
 
-| File | What |
-|---|---|
-| `migrations/2026-11-18_quiz_question_rls.sql` | Turns on Row Level Security for `quiz_question` (the 2026-11-17 migration missed it, so the table is open to Supabase's public API). One line; safe to re-run; verify row must be `t`. |
+Nothing (as of 2026-11-18; the last one, `2026-11-18_quiz_question_rls.sql`, ran on prod with its verify row `t`).
+When you add a file to `migrations/`, list it here until it has run.
 
 ## Seed files (`seed/`)
 
