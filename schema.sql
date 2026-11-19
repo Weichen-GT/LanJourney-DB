@@ -854,16 +854,17 @@ CREATE INDEX IF NOT EXISTS idx_article_new_word_vocab ON article_new_word (vocab
 CREATE INDEX IF NOT EXISTS idx_article_new_word_user ON article_new_word (user_id, created_at DESC);
 
 -- =========================
--- 22) article_term: the names, titles and hard words in a saved article, with a short plain note
---     ("L3Harris": "US defence and technology company"). The sidebar lists them apart from the words
---     to learn; they are never taught or reviewed. Written for Trend articles (the brief knows them).
+-- 22) article_term: the names, titles, hard words and short forms in a saved article, with a short
+--     plain note ("L3Harris": "US defence and technology company"). The text underlines them and
+--     shows the note on tap. Names and short forms are never taught; an unknown word inside a title
+--     or term is taught like any other word. Written for Trend articles (the brief knows them).
 -- =========================
 CREATE TABLE
   IF NOT EXISTS article_term (
     id BIGSERIAL PRIMARY KEY,
     article_id UUID NOT NULL REFERENCES article (id) ON DELETE CASCADE,
     term TEXT NOT NULL,                       -- as written in the article
-    kind TEXT NOT NULL CHECK (kind IN ('NAME', 'TITLE', 'TERM')),
+    kind TEXT NOT NULL CHECK (kind IN ('NAME', 'TITLE', 'TERM', 'SHORT_FORM')),
     note TEXT,                                -- a few plain words; may be empty
     position INT NOT NULL DEFAULT 0           -- order of first appearance
   );
@@ -881,6 +882,18 @@ CREATE TABLE
     enabled BOOLEAN NOT NULL DEFAULT FALSE,
     changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- when it was last switched
     changed_by UUID REFERENCES app_user (id) ON DELETE SET NULL -- the reader who switched it last
+  );
+
+-- =========================
+-- 24) reader_known_term: the short forms ("CEO") a reader marked "Got it"; later articles show them
+--     as plain text, still with the note on tap. term is lower case without a plural "s".
+-- =========================
+CREATE TABLE
+  IF NOT EXISTS reader_known_term (
+    user_id UUID NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+    term TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, term)
   );
 
 -- =========================
