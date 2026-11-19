@@ -15,7 +15,7 @@ Everything about the LanJourney PostgreSQL database (Supabase in prod, Docker lo
 
 ## Pending on prod
 
-Nothing (as of 2026-11-18; the last one, `2026-11-18_quiz_question_rls.sql`, ran on prod with its verify row `t`).
+Nothing (as of 2026-11-18; the last one, `2026-11-18_meaning_card_extras.sql`, ran on prod with its verify row `t`, 4 of 4).
 When you add a file to `migrations/`, list it here until it has run.
 
 ## Seed files (`seed/`)
