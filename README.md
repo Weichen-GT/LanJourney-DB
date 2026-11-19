@@ -15,7 +15,8 @@ Everything about the LanJourney PostgreSQL database (Supabase in prod, Docker lo
 
 ## Pending on prod
 
-Nothing (as of 2026-11-18; the last one, `2026-11-18_quiz_question_rls.sql`, ran on prod with its verify row `t`).
+- `2026-11-18_retire_old_quiz_pool.sql` -- data fix: retires every Quick Test pool question saved before 2026-11-19 (written under the old rules). Run after the backend at `2eec653`+ is live; PART 2 rows must all be `true`.
+
 When you add a file to `migrations/`, list it here until it has run.
 
 ## Seed files (`seed/`)
