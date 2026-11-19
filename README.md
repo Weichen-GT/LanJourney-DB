@@ -56,7 +56,7 @@ and the seed files listed in its `docker-compose.yml`.
   `python tools/gen_schema_doc.py` (needs the PostgreSQL binaries; it uses a throwaway local server), and commit the
   three files together. For prod, also add a hand-run script to `migrations/` (test it with
   `tools/test_migration.sh`), and make sure it ends in the same schema as `schema.sql` -- including Row Level
-  Security on a new table. After the owner runs it on prod, `git mv` it to `archive/migrations/`.
+  Security on a new table. Run it on prod with `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/<file>.sql` before deploying the backend that needs it, check the verify rows, then `git mv` it to `archive/migrations/`.
 - **Changed the vocabulary:** regenerate the seed files with the LanJourney-lib pipeline (its README). For prod,
   add an in-place script (in `migrations/`, marked as a data fix) -- never reload meanings once real users exist
   (it cascades to their progress). After it has run on prod, fold it into a seed file so `build.sql` still gives
