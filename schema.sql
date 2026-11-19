@@ -158,6 +158,10 @@ CREATE TABLE
     rank INT NOT NULL DEFAULT 1 CHECK (rank > 0),   -- 1 = most used sense of this word, higher = more obscure
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     use_count INT,                  -- WordNet (SemCor) count of this word used in this sense; NULL when unknown
+    -- Word card extras, written by the AI the first time a card shows this meaning (shared by every reader).
+    second_example TEXT,            -- another example sentence, different from example_sentence
+    phrases JSONB,                  -- common phrases with this meaning, e.g. ["defense mechanism"]; [] when none
+    extras_filled_at TIMESTAMPTZ,   -- when the AI wrote the extras; NULL = not asked yet
     CONSTRAINT uq_meaning_vocab_sense UNIQUE (vocab_id, sense_key),
     CONSTRAINT chk_sense_key_format CHECK (sense_key ~ '^[a-z0-9_]+$'),
     CONSTRAINT chk_wordnet_sense_id_format CHECK (wordnet_sense_id IS NULL OR wordnet_sense_id ~ '^[nvasr]#[0-9]+$')
