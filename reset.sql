@@ -6,7 +6,7 @@
 -- !! Only run it on a database you are happy to wipe (local dev, or an empty scratch project).
 --
 -- After it, load the vocabulary (see README.md > "Rebuild a database"):
---   seed/01_vocabulary_original.sql, seed/02_vocabulary_wordnet.sql, seed/03_vocabulary_expansion.sql, seed/04_frequency_rank.sql
+--   seed/01_vocabulary_original.sql, seed/02_vocabulary_wordnet.sql, seed/03_vocabulary_expansion.sql, seed/04_frequency_rank.sql, seed/05_meaning_fixes.sql
 -- Runs as one script in the Supabase SQL editor or psql (no BEGIN/COMMIT: the editor runs statements separately).
 -- =============================================================
 
@@ -208,7 +208,7 @@ CREATE TABLE
     part_of_speech TEXT,
     example_sentence TEXT,
     example_sentence_zh TEXT,       -- Chinese translation of example_sentence
-    -- rank follows use_count within the word, across parts of speech (updates/2026-10-31_sense_order_by_use.sql);
+    -- rank follows use_count within the word, across parts of speech (archive/updates/2026-10-31_sense_order_by_use.sql, now seed/05);
     -- a word with any uncounted meaning keeps its old order.
     rank INT NOT NULL DEFAULT 1 CHECK (rank > 0),   -- 1 = most used sense of this word, higher = more obscure
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
